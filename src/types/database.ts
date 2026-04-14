@@ -1,4 +1,6 @@
 export type Paciente = Database['public']['Tables']['pacientes']['Row']
+export type Especialidad = Database['public']['Tables']['especialidades']['Row']
+export type Lugar = Database['public']['Tables']['lugares']['Row']
 
 export type Json =
   | string
