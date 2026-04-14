@@ -1,3 +1,5 @@
+export type Paciente = Database['public']['Tables']['pacientes']['Row']
+
 export type Json =
   | string
   | number

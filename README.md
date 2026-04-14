@@ -1,36 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MomCitas - Sistema de Citas Médicas
 
-## Getting Started
+Sistema de gestión de citas médicas para uso personal compartido.
 
-First, run the development server:
+## Tech Stack
+
+- **Frontend**: Next.js 14 (App Router)
+- **Backend**: Supabase (Postgres + Auth)
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Deployment**: Vercel (compatible)
+
+## Requisitos
+
+- Node.js 18+
+- Cuenta de Supabase (tier gratuito)
+
+## Setup Local
+
+### 1. Clonar el proyecto
+
+```bash
+cd mom-citas
+```
+
+### 2. Instalar dependencias
+
+```bash
+npm install
+```
+
+### 3. Configurar Supabase
+
+1. Crear un proyecto en [supabase.com](https://supabase.com)
+2. Copiar las credenciales del proyecto:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Crear archivo `.env.local` en la raíz:
+
+```bash
+cp .env.example .env.local
+# Editar .env.local con las credenciales
+```
+
+### 4. Ejecutar migraciones
+
+1. Ir al dashboard de Supabase → SQL Editor
+2. Copiar el contenido de `supabase/migrations/001_initial_schema.sql`
+3. Ejecutar el SQL
+
+### 5. Ejecutar seed (opcional)
+
+1. En SQL Editor de Supabase
+2. Copiar el contenido de `supabase/seed.sql`
+3. Ejecutar (remover `auth.uid()` y usar valores hardcodeados o crear función)
+
+### 6. Levantar servidor local
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura del Proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+mom-citas/
+├── src/
+│   ├── app/                  # Next.js App Router
+│   │   ├── (auth)/          # Rutas de autenticación
+│   │   ├── (dashboard)/     # Rutas protegidas
+│   │   └── ...
+│   ├── components/           # Componentes React
+│   │   ├── ui/             # shadcn/ui components
+│   │   └── sidebar.tsx     # Navegación
+│   ├── lib/
+│   │   ├── supabase/       # Clientes Supabase
+│   │   └── utils.ts        # Utilidades
+│   └── types/
+│       └── database.ts     # Tipos de BD
+├── supabase/
+│   ├── migrations/         # Schema SQL
+│   └── seed.sql           # Datos iniciales
+└── middleware.ts          # Auth middleware
+```
 
-## Learn More
+## Despliegue en Vercel
 
-To learn more about Next.js, take a look at the following resources:
+1. Hacer push a GitHub
+2. Conectar repo en [vercel.com](https://vercel.com)
+3. Agregar variables de entorno:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Próximos Pasos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [ ] CRUD de Pacientes
+- [ ] CRUD de Citas
+- [ ] Dashboard con gráficos
+- [ ] Exportar/Importar desde Excel
 
-## Deploy on Vercel
+## Licencia
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
