@@ -1,14 +1,44 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, Mail, Lock, ArrowRight } from 'lucide-react'
+import { Loader2, Mail, Lock } from 'lucide-react'
+
+// Traducción de errores de Supabase al español
+function translateError(message: string): string {
+  const errorMap: Record<string, string> = {
+    'Invalid login credentials': 'Email o contraseña incorrectos',
+    'Email not confirmed': 'El email no ha sido confirmado',
+    'User not found': 'Usuario no encontrado',
+    'Wrong password': 'Contraseña incorrecta',
+    'Invalid email': 'Email inválido',
+    'Password is too weak': 'La contraseña es muy débil',
+    'Over request rate limit': 'Demasiados intentos. Intentá más tarde',
+    'Over email send rate limit': 'Demasiados emails enviados. Intentá más tarde',
+    'Phone not confirmed': 'Teléfono no confirmado',
+    'Identity not found': 'Usuario no encontrado',
+    'SSO provider not found': 'Proveedor SSO no encontrado',
+    'Refresh token not found': 'Sesión expirada. Volvé a iniciar sesión',
+    'Auth session missing': 'Sesión no encontrada. Volvé a iniciar sesión',
+    'User already registered': 'Este usuario ya está registrado',
+    'Email address is already registered': 'Este email ya está registrado',
+  }
+
+  // Buscar coincidencia parcial
+  for (const [key, value] of Object.entries(errorMap)) {
+    if (message.toLowerCase().includes(key.toLowerCase())) {
+      return value
+    }
+  }
+
+  // Si no hay traducción, devolver el mensaje original
+  return message
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -23,17 +53,23 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (error) {
-      setError(error.message)
+      if (error) {
+        const translatedError = translateError(error.message)
+        setError(translatedError)
+        setLoading(false)
+      } else if (data.user) {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } catch (err) {
+      setError('Error de conexión. Intentá de nuevo.')
       setLoading(false)
-    } else {
-      router.push('/dashboard')
-      router.refresh()
     }
   }
 
@@ -69,10 +105,10 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
-                  {error}
+                  <span>{error}</span>
                 </div>
               )}
               
@@ -95,17 +131,9 @@ export default function LoginPage() {
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-slate-700">
-                    Contraseña
-                  </Label>
-                  <Link 
-                    href="/recuperar-password" 
-                    className="text-xs text-blue-600 hover:text-blue-700 hover:underline"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link>
-                </div>
+                <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+                  Contraseña
+                </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
@@ -130,10 +158,7 @@ export default function LoginPage() {
                     Iniciando sesión...
                   </>
                 ) : (
-                  <>
-                    Iniciar Sesión
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
+                  'Iniciar Sesión'
                 )}
               </Button>
             </form>
