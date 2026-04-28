@@ -1,45 +1,45 @@
 'use client'
 
 import { useState } from 'react'
-import { Lugar } from '@/types/database'
+import { Location } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 interface Props {
-  lugar: Lugar | null
-  onSuccess: (lugar: Lugar, isNew: boolean) => void
+  location: Location | null
+  onSuccess: (location: Location, isNew: boolean) => void
   onCancel?: () => void
 }
 
-export function LugarForm({ lugar, onSuccess, onCancel }: Props) {
-  const [nombre, setNombre] = useState(lugar?.nombre || '')
-  const [direccion, setDireccion] = useState(lugar?.direccion || '')
+export function LocationForm({ location, onSuccess, onCancel }: Props) {
+  const [name, setName] = useState(location?.name || '')
+  const [address, setAddress] = useState(location?.address || '')
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!nombre.trim()) {
+    if (!name.trim()) {
       toast.error('El nombre es requerido')
       return
     }
     setLoading(true)
     
-    if (lugar) {
+    if (location) {
       const { data, error } = await supabase
-        .from('lugares')
-        .update({ nombre, direccion: direccion || null, updated_at: new Date().toISOString() })
-        .eq('id', lugar.id)
+        .from('locations')
+        .update({ name, address: address || null, updated_at: new Date().toISOString() })
+        .eq('id', location.id)
         .select()
         .single()
       if (error) toast.error('Error al actualizar')
       else if (data) onSuccess(data, false)
     } else {
       const { data, error } = await supabase
-        .from('lugares')
-        .insert({ nombre, direccion: direccion || null })
+        .from('locations')
+        .insert({ name, address: address || null })
         .select()
         .single()
       if (error) toast.error('Error al crear')
@@ -52,21 +52,21 @@ export function LugarForm({ lugar, onSuccess, onCancel }: Props) {
     <form onSubmit={handleSubmit} className="flex gap-2 items-end flex-wrap">
       <div className="flex-1 min-w-[200px]">
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Nombre del lugar"
           autoFocus
         />
       </div>
       <div className="flex-1 min-w-[200px]">
         <Input
-          value={direccion}
-          onChange={(e) => setDireccion(e.target.value)}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
           placeholder="Dirección (opcional)"
         />
       </div>
       <Button type="submit" disabled={loading}>
-        {loading ? 'Guardando...' : lugar ? 'Actualizar' : 'Agregar'}
+        {loading ? 'Guardando...' : location ? 'Actualizar' : 'Agregar'}
       </Button>
       {onCancel && (
         <Button type="button" variant="outline" onClick={onCancel}>

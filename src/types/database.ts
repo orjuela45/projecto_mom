@@ -1,6 +1,9 @@
-export type Paciente = Database['public']['Tables']['pacientes']['Row']
-export type Especialidad = Database['public']['Tables']['especialidades']['Row']
-export type Lugar = Database['public']['Tables']['lugares']['Row']
+// Type aliases for better readability
+export type Patient = Database['public']['Tables']['patients']['Row']
+export type Specialty = Database['public']['Tables']['specialties']['Row']
+export type Location = Database['public']['Tables']['locations']['Row']
+export type Appointment = Database['public']['Tables']['appointments']['Row']
+export type Profile = Database['public']['Tables']['profiles']['Row']
 
 export type Json =
   | string
@@ -38,10 +41,10 @@ export interface Database {
           updated_at?: string
         }
       }
-      especialidades: {
+      specialties: {
         Row: {
           id: string
-          nombre: string
+          name: string
           created_by: string | null
           created_at: string
           updated_at: string
@@ -49,7 +52,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          nombre: string
+          name: string
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -57,17 +60,17 @@ export interface Database {
         }
         Update: {
           id?: string
-          nombre?: string
+          name?: string
           created_by?: string | null
           updated_at?: string
           deleted_at?: string | null
         }
       }
-      lugares: {
+      locations: {
         Row: {
           id: string
-          nombre: string
-          direccion: string | null
+          name: string
+          address: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -75,8 +78,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          nombre: string
-          direccion?: string | null
+          name: string
+          address?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -84,18 +87,18 @@ export interface Database {
         }
         Update: {
           id?: string
-          nombre?: string
-          direccion?: string | null
+          name?: string
+          address?: string | null
           updated_at?: string
           deleted_at?: string | null
         }
       }
-      pacientes: {
+      patients: {
         Row: {
           id: string
-          nombre: string
-          historia_clinica: string | null
-          telefono: string | null
+          name: string
+          medical_record: string | null
+          phone: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -103,9 +106,9 @@ export interface Database {
         }
         Insert: {
           id?: string
-          nombre: string
-          historia_clinica?: string | null
-          telefono?: string | null
+          name: string
+          medical_record?: string | null
+          phone?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -113,26 +116,26 @@ export interface Database {
         }
         Update: {
           id?: string
-          nombre?: string
-          historia_clinica?: string | null
-          telefono?: string | null
+          name?: string
+          medical_record?: string | null
+          phone?: string | null
           updated_at?: string
           deleted_at?: string | null
         }
       }
-      citas: {
+      appointments: {
         Row: {
           id: string
-          fecha: string
-          hora_cita: string
-          hora_salida: string | null
-          paciente_id: string
-          especialidad_id: string
-          lugar_id: string | null
-          acompanante: string | null
-          estado: string
-          historia_clinica: string | null
-          observaciones: string | null
+          date: string
+          appointment_time: string
+          departure_time: string | null
+          patient_id: string
+          specialty_id: string
+          location_id: string | null
+          companion: string | null
+          status: string
+          medical_record: string | null
+          notes: string | null
           created_by: string | null
           created_at: string
           updated_at: string
@@ -140,16 +143,16 @@ export interface Database {
         }
         Insert: {
           id?: string
-          fecha: string
-          hora_cita: string
-          hora_salida?: string | null
-          paciente_id: string
-          especialidad_id: string
-          lugar_id?: string | null
-          acompanante?: string | null
-          estado?: string
-          historia_clinica?: string | null
-          observaciones?: string | null
+          date: string
+          appointment_time: string
+          departure_time?: string | null
+          patient_id: string
+          specialty_id: string
+          location_id?: string | null
+          companion?: string | null
+          status?: string
+          medical_record?: string | null
+          notes?: string | null
           created_by?: string | null
           created_at?: string
           updated_at?: string
@@ -157,16 +160,16 @@ export interface Database {
         }
         Update: {
           id?: string
-          fecha?: string
-          hora_cita?: string
-          hora_salida?: string | null
-          paciente_id?: string
-          especialidad_id?: string
-          lugar_id?: string | null
-          acompanante?: string | null
-          estado?: string
-          historia_clinica?: string | null
-          observaciones?: string | null
+          date?: string
+          appointment_time?: string
+          departure_time?: string | null
+          patient_id?: string
+          specialty_id?: string
+          location_id?: string | null
+          companion?: string | null
+          status?: string
+          medical_record?: string | null
+          notes?: string | null
           updated_at?: string
           deleted_at?: string | null
         }

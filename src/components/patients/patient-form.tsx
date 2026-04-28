@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { Paciente } from '@/types/database'
+import { Patient } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -24,51 +24,51 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-const pacienteSchema = z.object({
-  nombre: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  historia_clinica: z.string().optional(),
-  telefono: z.string().optional(),
+const patientSchema = z.object({
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  medical_record: z.string().optional(),
+  phone: z.string().optional(),
 })
 
-type FormData = z.infer<typeof pacienteSchema>
+type FormData = z.infer<typeof patientSchema>
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  paciente: Paciente | null
-  onSuccess: (paciente: Paciente) => void
+  patient: Patient | null
+  onSuccess: (patient: Patient) => void
 }
 
-export function PacienteForm({ open, onOpenChange, paciente, onSuccess }: Props) {
+export function PatientForm({ open, onOpenChange, patient, onSuccess }: Props) {
   const supabase = createClient()
-  const isEditing = !!paciente
+  const isEditing = !!patient
   
   const form = useForm<FormData>({
-    resolver: zodResolver(pacienteSchema),
+    resolver: zodResolver(patientSchema),
     defaultValues: {
-      nombre: '',
-      historia_clinica: '',
-      telefono: '',
+      name: '',
+      medical_record: '',
+      phone: '',
     },
   })
 
   useEffect(() => {
     if (open) {
-      if (paciente) {
+      if (patient) {
         form.reset({
-          nombre: paciente.nombre,
-          historia_clinica: paciente.historia_clinica || '',
-          telefono: paciente.telefono || '',
+          name: patient.name,
+          medical_record: patient.medical_record || '',
+          phone: patient.phone || '',
         })
       } else {
         form.reset({
-          nombre: '',
-          historia_clinica: '',
-          telefono: '',
+          name: '',
+          medical_record: '',
+          phone: '',
         })
       }
     }
-  }, [open, paciente, form])
+  }, [open, patient, form])
 
   async function onSubmit(data: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
@@ -76,14 +76,14 @@ export function PacienteForm({ open, onOpenChange, paciente, onSuccess }: Props)
 
     if (isEditing) {
       const { data: updated, error } = await supabase
-        .from('pacientes')
+        .from('patients')
         .update({
-          nombre: data.nombre,
-          historia_clinica: data.historia_clinica || null,
-          telefono: data.telefono || null,
+          name: data.name,
+          medical_record: data.medical_record || null,
+          phone: data.phone || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', paciente.id)
+        .eq('id', patient.id)
         .select()
         .single()
       
@@ -94,11 +94,11 @@ export function PacienteForm({ open, onOpenChange, paciente, onSuccess }: Props)
       }
     } else {
       const { data: created, error } = await supabase
-        .from('pacientes')
+        .from('patients')
         .insert({
-          nombre: data.nombre,
-          historia_clinica: data.historia_clinica || null,
-          telefono: data.telefono || null,
+          name: data.name,
+          medical_record: data.medical_record || null,
+          phone: data.phone || null,
           created_by: user.id,
         })
         .select()
@@ -124,7 +124,7 @@ export function PacienteForm({ open, onOpenChange, paciente, onSuccess }: Props)
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="nombre"
+              name="name"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nombre *</FormLabel>
@@ -137,7 +137,7 @@ export function PacienteForm({ open, onOpenChange, paciente, onSuccess }: Props)
             />
             <FormField
               control={form.control}
-              name="historia_clinica"
+              name="medical_record"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Historia Clínica</FormLabel>
@@ -150,7 +150,7 @@ export function PacienteForm({ open, onOpenChange, paciente, onSuccess }: Props)
             />
             <FormField
               control={form.control}
-              name="telefono"
+              name="phone"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Teléfono</FormLabel>

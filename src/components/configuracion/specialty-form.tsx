@@ -1,44 +1,44 @@
 'use client'
 
 import { useState } from 'react'
-import { Especialidad } from '@/types/database'
+import { Specialty } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 interface Props {
-  especialidad: Especialidad | null
-  onSuccess: (especialidad: Especialidad, isNew: boolean) => void
+  specialty: Specialty | null
+  onSuccess: (specialty: Specialty, isNew: boolean) => void
   onCancel?: () => void
 }
 
-export function EspecialidadForm({ especialidad, onSuccess, onCancel }: Props) {
-  const [nombre, setNombre] = useState(especialidad?.nombre || '')
+export function SpecialtyForm({ specialty, onSuccess, onCancel }: Props) {
+  const [name, setName] = useState(specialty?.name || '')
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!nombre.trim()) {
+    if (!name.trim()) {
       toast.error('El nombre es requerido')
       return
     }
     setLoading(true)
     
-    if (especialidad) {
+    if (specialty) {
       const { data, error } = await supabase
-        .from('especialidades')
-        .update({ nombre, updated_at: new Date().toISOString() })
-        .eq('id', especialidad.id)
+        .from('specialties')
+        .update({ name, updated_at: new Date().toISOString() })
+        .eq('id', specialty.id)
         .select()
         .single()
       if (error) toast.error('Error al actualizar')
       else if (data) onSuccess(data, false)
     } else {
       const { data, error } = await supabase
-        .from('especialidades')
-        .insert({ nombre })
+        .from('specialties')
+        .insert({ name })
         .select()
         .single()
       if (error) toast.error('Error al crear')
@@ -51,14 +51,14 @@ export function EspecialidadForm({ especialidad, onSuccess, onCancel }: Props) {
     <form onSubmit={handleSubmit} className="flex gap-2 items-end">
       <div className="flex-1">
         <Input
-          value={nombre}
-          onChange={(e) => setNombre(e.target.value)}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="Nombre de la especialidad"
           autoFocus
         />
       </div>
       <Button type="submit" disabled={loading}>
-        {loading ? 'Guardando...' : especialidad ? 'Actualizar' : 'Agregar'}
+        {loading ? 'Guardando...' : specialty ? 'Actualizar' : 'Agregar'}
       </Button>
       {onCancel && (
         <Button type="button" variant="outline" onClick={onCancel}>

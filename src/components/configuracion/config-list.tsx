@@ -1,38 +1,38 @@
 import { createClient } from '@/lib/supabase/server'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { EspecialidadForm } from './especialidad-form'
-import { EspecialidadTable } from './especialidad-table'
-import { LugarForm } from './lugar-form'
-import { LugarTable } from './lugar-table'
+import { SpecialtyForm } from './specialty-form'
+import { SpecialtyTable } from './specialty-table'
+import { LocationForm } from './location-form'
+import { LocationTable } from './location-table'
 
 export default async function ConfigList() {
   const supabase = await createClient()
   
-  const { data: especialidades } = await supabase
-    .from('especialidades')
+  const { data: specialties } = await supabase
+    .from('specialties')
     .select('*')
     .is('deleted_at', null)
-    .order('nombre')
+    .order('name')
   
-  const { data: lugares } = await supabase
-    .from('lugares')
+  const { data: locations } = await supabase
+    .from('locations')
     .select('*')
     .is('deleted_at', null)
-    .order('nombre')
+    .order('name')
   
   return (
-    <Tabs defaultValue="especialidades" className="w-full">
+    <Tabs defaultValue="specialties" className="w-full">
       <TabsList>
-        <TabsTrigger value="especialidades">Especialidades</TabsTrigger>
-        <TabsTrigger value="lugares">Lugares</TabsTrigger>
+        <TabsTrigger value="specialties">Especialidades</TabsTrigger>
+        <TabsTrigger value="locations">Lugares</TabsTrigger>
       </TabsList>
-      <TabsContent value="especialidades" className="space-y-4">
-        <EspecialidadForm onSuccess={() => {}} />
-        <EspecialidadTable initialEspecialidades={especialidades || []} />
+      <TabsContent value="specialties" className="space-y-4">
+        <SpecialtyForm onSuccess={() => {}} />
+        <SpecialtyTable initialSpecialties={specialties || []} />
       </TabsContent>
-      <TabsContent value="lugares" className="space-y-4">
-        <LugarForm onSuccess={() => {}} />
-        <LugarTable initialLugares={lugares || []} />
+      <TabsContent value="locations" className="space-y-4">
+        <LocationForm onSuccess={() => {}} />
+        <LocationTable initialLocations={locations || []} />
       </TabsContent>
     </Tabs>
   )

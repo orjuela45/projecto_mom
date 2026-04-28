@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { Cita, Paciente, Especialidad, Lugar } from '@/types/database'
+import { Appointment, Patient, Specialty, Location } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -24,135 +24,135 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-const citaSchema = z.object({
-  fecha: z.string().min(1, 'La fecha es requerida'),
-  hora_cita: z.string().min(1, 'La hora es requerida'),
-  hora_salida: z.string().optional(),
-  paciente_id: z.string().min(1, 'Selecciona un paciente'),
-  especialidad_id: z.string().min(1, 'Selecciona una especialidad'),
-  lugar_id: z.string().optional(),
-  acompanante: z.string().optional(),
-  observaciones: z.string().optional(),
+const appointmentSchema = z.object({
+  date: z.string().min(1, 'La fecha es requerida'),
+  appointment_time: z.string().min(1, 'La hora es requerida'),
+  departure_time: z.string().optional(),
+  patient_id: z.string().min(1, 'Selecciona un paciente'),
+  specialty_id: z.string().min(1, 'Selecciona una especialidad'),
+  location_id: z.string().optional(),
+  companion: z.string().optional(),
+  notes: z.string().optional(),
 })
 
-type FormData = z.infer<typeof citaSchema>
+type FormData = z.infer<typeof appointmentSchema>
 
-interface CitaWithRelations extends Cita {
-  pacientes?: { id: string; nombre: string } | null
-  especialidades?: { id: string; nombre: string } | null
-  lugares?: { id: string; nombre: string } | null
+interface AppointmentWithRelations extends Appointment {
+  patients?: { id: string; name: string } | null
+  specialties?: { id: string; name: string } | null
+  locations?: { id: string; name: string } | null
 }
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  cita: CitaWithRelations | null
-  pacientes: Paciente[]
-  especialidades: Especialidad[]
-  lugares: Lugar[]
-  onSuccess: (cita: CitaWithRelations) => void
+  appointment: AppointmentWithRelations | null
+  patients: Patient[]
+  specialties: Specialty[]
+  locations: Location[]
+  onSuccess: (appointment: AppointmentWithRelations) => void
 }
 
-export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, lugares, onSuccess }: Props) {
+export function AppointmentForm({ open, onOpenChange, appointment, patients, specialties, locations, onSuccess }: Props) {
   const supabase = createClient()
-  const isEditing = !!cita
+  const isEditing = !!appointment
   
   const form = useForm<FormData>({
-    resolver: zodResolver(citaSchema),
+    resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      fecha: '',
-      hora_cita: '',
-      hora_salida: '',
-      paciente_id: '',
-      especialidad_id: '',
-      lugar_id: '',
-      acompanante: '',
-      observaciones: '',
+      date: '',
+      appointment_time: '',
+      departure_time: '',
+      patient_id: '',
+      specialty_id: '',
+      location_id: '',
+      companion: '',
+      notes: '',
     },
   })
 
   useEffect(() => {
     if (open) {
-      if (cita) {
+      if (appointment) {
         form.reset({
-          fecha: cita.fecha,
-          hora_cita: cita.hora_cita,
-          hora_salida: cita.hora_salida || '',
-          paciente_id: cita.paciente_id,
-          especialidad_id: cita.especialidad_id,
-          lugar_id: cita.lugares?.id || '',
-          acompanante: cita.acompanante || '',
-          observaciones: cita.observaciones || '',
+          date: appointment.date,
+          appointment_time: appointment.appointment_time,
+          departure_time: appointment.departure_time || '',
+          patient_id: appointment.patient_id,
+          specialty_id: appointment.specialty_id,
+          location_id: appointment.locations?.id || '',
+          companion: appointment.companion || '',
+          notes: appointment.notes || '',
         })
       } else {
         form.reset({
-          fecha: new Date().toISOString().split('T')[0],
-          hora_cita: '',
-          hora_salida: '',
-          paciente_id: '',
-          especialidad_id: '',
-          lugar_id: '',
-          acompanante: '',
-          observaciones: '',
+          date: new Date().toISOString().split('T')[0],
+          appointment_time: '',
+          departure_time: '',
+          patient_id: '',
+          specialty_id: '',
+          location_id: '',
+          companion: '',
+          notes: '',
         })
       }
     }
-  }, [open, cita, form])
+  }, [open, appointment, form])
 
   async function onSubmit(data: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const citaData = {
-      fecha: data.fecha,
-      hora_cita: data.hora_cita,
-      hora_salida: data.hora_salida || null,
-      paciente_id: data.paciente_id,
-      especialidad_id: data.especialidad_id,
-      lugar_id: data.lugar_id || null,
-      acompanante: data.acompanante || null,
-      observaciones: data.observaciones || null,
+    const appointmentData = {
+      date: data.date,
+      appointment_time: data.appointment_time,
+      departure_time: data.departure_time || null,
+      patient_id: data.patient_id,
+      specialty_id: data.specialty_id,
+      location_id: data.location_id || null,
+      companion: data.companion || null,
+      notes: data.notes || null,
+      status: isEditing ? undefined : 'pending',
       updated_at: new Date().toISOString(),
     }
 
     if (isEditing) {
       const { data: updated, error } = await supabase
-        .from('citas')
-        .update(citaData)
-        .eq('id', cita.id)
+        .from('appointments')
+        .update(appointmentData)
+        .eq('id', appointment.id)
         .select(`
           *,
-          pacientes (id, nombre),
-          especialidades (id, nombre),
-          lugares (id, nombre)
+          patients (id, name),
+          specialties (id, name),
+          locations (id, name)
         `)
         .single()
       
       if (error) {
         toast.error('Error al actualizar cita')
       } else if (updated) {
-        onSuccess(updated as CitaWithRelations)
+        onSuccess(updated as AppointmentWithRelations)
       }
     } else {
       const { data: created, error } = await supabase
-        .from('citas')
+        .from('appointments')
         .insert({
-          ...citaData,
-          estado: 'pendiente',
+          ...appointmentData,
           created_by: user.id,
         })
         .select(`
           *,
-          pacientes (id, nombre),
-          especialidades (id, nombre),
-          lugares (id, nombre)
+          patients (id, name),
+          specialties (id, name),
+          locations (id, name)
         `)
         .single()
       
       if (error) {
         toast.error('Error al crear cita')
       } else if (created) {
-        onSuccess(created as CitaWithRelations)
+        onSuccess(created as AppointmentWithRelations)
       }
     }
   }
@@ -170,7 +170,7 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="fecha"
+                name="date"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fecha *</FormLabel>
@@ -183,7 +183,7 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
               />
               <FormField
                 control={form.control}
-                name="hora_cita"
+                name="appointment_time"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Hora de Cita *</FormLabel>
@@ -199,7 +199,7 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="hora_salida"
+                name="departure_time"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Hora de Salida</FormLabel>
@@ -212,15 +212,15 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
               />
               <FormField
                 control={form.control}
-                name="lugar_id"
+                name="location_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Lugar</FormLabel>
                     <FormControl>
                       <select {...field} className="border rounded px-3 py-2 w-full">
                         <option value="">Seleccionar lugar</option>
-                        {lugares.map(l => (
-                          <option key={l.id} value={l.id}>{l.nombre}</option>
+                        {locations.map(l => (
+                          <option key={l.id} value={l.id}>{l.name}</option>
                         ))}
                       </select>
                     </FormControl>
@@ -232,15 +232,15 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
 
             <FormField
               control={form.control}
-              name="paciente_id"
+              name="patient_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Paciente *</FormLabel>
                   <FormControl>
                     <select {...field} className="border rounded px-3 py-2 w-full">
                       <option value="">Seleccionar paciente</option>
-                      {pacientes.map(p => (
-                        <option key={p.id} value={p.id}>{p.nombre}</option>
+                      {patients.map(p => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
                   </FormControl>
@@ -251,15 +251,15 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
 
             <FormField
               control={form.control}
-              name="especialidad_id"
+              name="specialty_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Especialidad *</FormLabel>
                   <FormControl>
                     <select {...field} className="border rounded px-3 py-2 w-full">
                       <option value="">Seleccionar especialidad</option>
-                      {especialidades.map(e => (
-                        <option key={e.id} value={e.id}>{e.nombre}</option>
+                      {specialties.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
                       ))}
                     </select>
                   </FormControl>
@@ -270,7 +270,7 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
 
             <FormField
               control={form.control}
-              name="acompanante"
+              name="companion"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Acompañante</FormLabel>
@@ -284,7 +284,7 @@ export function CitaForm({ open, onOpenChange, cita, pacientes, especialidades, 
 
             <FormField
               control={form.control}
-              name="observaciones"
+              name="notes"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Observaciones</FormLabel>

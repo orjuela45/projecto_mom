@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { Calendar, Users, Clock, CheckCircle, XCircle } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -9,22 +8,22 @@ export default async function DashboardPage() {
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
   
-  const { data: citas } = await supabase
-    .from('citas')
+  const { data: appointments } = await supabase
+    .from('appointments')
     .select('*')
     .eq('deleted_at', null)
-    .gte('fecha', firstDayOfMonth)
-    .lte('fecha', lastDayOfMonth)
+    .gte('date', firstDayOfMonth)
+    .lte('date', lastDayOfMonth)
   
-  const { count: totalPacientes } = await supabase
-    .from('pacientes')
+  const { count: totalPatients } = await supabase
+    .from('patients')
     .select('*', { count: 'exact', head: true })
     .is('deleted_at', null)
   
-  const citasDelMes = citas || []
-  const citasPendientes = citasDelMes.filter(c => c.estado === 'pendiente').length
-  const citasAtendidas = citasDelMes.filter(c => c.estado === 'atendido').length
-  const citasCanceladas = citasDelMes.filter(c => c.estado === 'cancelado').length
+  const appointmentsOfMonth = appointments || []
+  const pendingAppointments = appointmentsOfMonth.filter(a => a.status === 'pending').length
+  const completedAppointments = appointmentsOfMonth.filter(a => a.status === 'completed').length
+  const cancelledAppointments = appointmentsOfMonth.filter(a => a.status === 'cancelled').length
 
   const monthName = now.toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })
 
@@ -40,7 +39,7 @@ export default async function DashboardPage() {
             </div>
             <div className="ml-4">
               <p className="text-sm text-slate-500">Citas del Mes</p>
-              <p className="text-2xl font-bold text-slate-900">{citasDelMes.length}</p>
+              <p className="text-2xl font-bold text-slate-900">{appointmentsOfMonth.length}</p>
             </div>
           </div>
         </div>
@@ -52,7 +51,7 @@ export default async function DashboardPage() {
             </div>
             <div className="ml-4">
               <p className="text-sm text-slate-500">Pacientes</p>
-              <p className="text-2xl font-bold text-slate-900">{totalPacientes || 0}</p>
+              <p className="text-2xl font-bold text-slate-900">{totalPatients || 0}</p>
             </div>
           </div>
         </div>
@@ -64,7 +63,7 @@ export default async function DashboardPage() {
             </div>
             <div className="ml-4">
               <p className="text-sm text-slate-500">Pendientes</p>
-              <p className="text-2xl font-bold text-slate-900">{citasPendientes}</p>
+              <p className="text-2xl font-bold text-slate-900">{pendingAppointments}</p>
             </div>
           </div>
         </div>
@@ -76,7 +75,7 @@ export default async function DashboardPage() {
             </div>
             <div className="ml-4">
               <p className="text-sm text-slate-500">Atendidas</p>
-              <p className="text-2xl font-bold text-slate-900">{citasAtendidas}</p>
+              <p className="text-2xl font-bold text-slate-900">{completedAppointments}</p>
             </div>
           </div>
         </div>
@@ -90,15 +89,15 @@ export default async function DashboardPage() {
         <h3 className="text-lg font-semibold text-slate-900 mb-4">Resumen de Citas</h3>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="p-4 bg-yellow-50 rounded-lg">
-            <p className="text-3xl font-bold text-yellow-600">{citasPendientes}</p>
+            <p className="text-3xl font-bold text-yellow-600">{pendingAppointments}</p>
             <p className="text-sm text-slate-600">Pendientes</p>
           </div>
           <div className="p-4 bg-green-50 rounded-lg">
-            <p className="text-3xl font-bold text-green-600">{citasAtendidas}</p>
+            <p className="text-3xl font-bold text-green-600">{completedAppointments}</p>
             <p className="text-sm text-slate-600">Atendidas</p>
           </div>
           <div className="p-4 bg-red-50 rounded-lg">
-            <p className="text-3xl font-bold text-red-600">{citasCanceladas}</p>
+            <p className="text-3xl font-bold text-red-600">{cancelledAppointments}</p>
             <p className="text-sm text-slate-600">Canceladas</p>
           </div>
         </div>

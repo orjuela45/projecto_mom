@@ -1,50 +1,49 @@
 'use client'
 
 import { useState } from 'react'
-import { Especialidad } from '@/types/database'
+import { Specialty } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Pencil, Trash2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { EspecialidadForm } from './especialidad-form'
+import { SpecialtyForm } from './specialty-form'
 
 interface Props {
-  initialEspecialidades: Especialidad[]
+  initialSpecialties: Specialty[]
 }
 
-export function EspecialidadTable({ initialEspecialidades }: Props) {
-  const [especialidades, setEspecialidades] = useState(initialEspecialidades)
-  const [editing, setEditing] = useState<Especialidad | null>(null)
+export function SpecialtyTable({ initialSpecialties }: Props) {
+  const [specialties, setSpecialties] = useState(initialSpecialties)
+  const [editing, setEditing] = useState<Specialty | null>(null)
   const [showForm, setShowForm] = useState(false)
   const supabase = createClient()
 
   async function handleDelete(id: string) {
     const { error } = await supabase
-      .from('especialidades')
+      .from('specialties')
       .update({ deleted_at: new Date().toISOString() })
       .eq('id', id)
     
     if (error) {
       toast.error('Error al eliminar')
     } else {
-      setEspecialidades(prev => prev.filter(e => e.id !== id))
+      setSpecialties(prev => prev.filter(s => s.id !== id))
       toast.success('Especialidad eliminada')
     }
   }
 
-  function handleSuccess(updated: Especialidad, isNew: boolean) {
+  function handleSuccess(updated: Specialty, isNew: boolean) {
     if (isNew) {
-      setEspecialidades(prev => [...prev, updated].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+      setSpecialties(prev => [...prev, updated].sort((a, b) => a.name.localeCompare(b.name)))
     } else {
-      setEspecialidades(prev => prev.map(e => e.id === updated.id ? updated : e))
+      setSpecialties(prev => prev.map(s => s.id === updated.id ? updated : s))
     }
     setEditing(null)
     setShowForm(false)
     toast.success(isNew ? 'Especialidad creada' : 'Especialidad actualizada')
   }
 
-  if (especialidades.length === 0 && !showForm) {
+  if (specialties.length === 0 && !showForm) {
     return (
       <div className="text-center py-8 text-slate-500">
         No hay especialidades registradas
@@ -54,22 +53,22 @@ export function EspecialidadTable({ initialEspecialidades }: Props) {
 
   return (
     <div className="space-y-2">
-      {especialidades.map(e => (
-        <div key={e.id} className="flex items-center justify-between p-3 border rounded-lg">
-          <span>{e.nombre}</span>
+      {specialties.map(s => (
+        <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg">
+          <span>{s.name}</span>
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => { setEditing(e); setShowForm(true) }}>
+            <Button variant="ghost" size="sm" onClick={() => { setEditing(s); setShowForm(true) }}>
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => handleDelete(e.id)}>
+            <Button variant="ghost" size="sm" onClick={() => handleDelete(s.id)}>
               <Trash2 className="h-4 w-4 text-red-500" />
             </Button>
           </div>
         </div>
       ))}
       {(showForm || editing) && (
-        <EspecialidadForm 
-          especialidad={editing} 
+        <SpecialtyForm 
+          specialty={editing} 
           onSuccess={handleSuccess}
           onCancel={() => { setEditing(null); setShowForm(false) }}
         />

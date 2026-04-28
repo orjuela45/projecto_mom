@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Paciente } from '@/types/database'
+import { Patient } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
-import { PacienteForm } from './paciente-form'
-import { PacienteDialog } from './paciente-dialog'
+import { PatientForm } from './patient-form'
+import { PatientDialog } from './patient-dialog'
 import {
   Table,
   TableBody,
@@ -20,52 +20,52 @@ import { Plus, Search, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Props {
-  initialPacientes: Paciente[]
+  initialPatients: Patient[]
 }
 
-export function PacienteTable({ initialPacientes }: Props) {
-  const [pacientes, setPacientes] = useState(initialPacientes)
+export function PatientTable({ initialPatients }: Props) {
+  const [patients, setPatients] = useState(initialPatients)
   const [search, setSearch] = useState('')
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingPaciente, setEditingPaciente] = useState<Paciente | null>(null)
-  const [deletingPaciente, setDeletingPaciente] = useState<Paciente | null>(null)
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
+  const [deletingPatient, setDeletingPatient] = useState<Patient | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  const filteredPacientes = pacientes.filter(p => 
-    p.nombre.toLowerCase().includes(search.toLowerCase())
+  const filteredPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  function handleEdit(paciente: Paciente) {
-    setEditingPaciente(paciente)
+  function handleEdit(patient: Patient) {
+    setEditingPatient(patient)
     setIsFormOpen(true)
   }
 
   async function handleDelete() {
-    if (!deletingPaciente) return
+    if (!deletingPatient) return
     
     const { error } = await supabase
-      .from('pacientes')
+      .from('patients')
       .update({ deleted_at: new Date().toISOString() })
-      .eq('id', deletingPaciente.id)
+      .eq('id', deletingPatient.id)
     
     if (error) {
       toast.error('Error al eliminar paciente')
     } else {
-      setPacientes(prev => prev.filter(p => p.id !== deletingPaciente.id))
+      setPatients(prev => prev.filter(p => p.id !== deletingPatient.id))
       toast.success('Paciente eliminado')
     }
-    setDeletingPaciente(null)
+    setDeletingPatient(null)
   }
 
-  function handleFormSuccess(newPaciente: Paciente) {
+  function handleFormSuccess(newPatient: Patient) {
     setIsFormOpen(false)
-    setEditingPaciente(null)
-    if (editingPaciente) {
-      setPacientes(prev => prev.map(p => p.id === newPaciente.id ? newPaciente : p))
+    setEditingPatient(null)
+    if (editingPatient) {
+      setPatients(prev => prev.map(p => p.id === newPatient.id ? newPatient : p))
       toast.success('Paciente actualizado')
     } else {
-      setPacientes(prev => [...prev, newPaciente].sort((a, b) => a.nombre.localeCompare(b.nombre)))
+      setPatients(prev => [...prev, newPatient].sort((a, b) => a.name.localeCompare(b.name)))
       toast.success('Paciente creado')
     }
   }
@@ -82,13 +82,13 @@ export function PacienteTable({ initialPacientes }: Props) {
             className="pl-8"
           />
         </div>
-        <Button onClick={() => { setEditingPaciente(null); setIsFormOpen(true) }}>
+        <Button onClick={() => { setEditingPatient(null); setIsFormOpen(true) }}>
           <Plus className="mr-2 h-4 w-4" />
           Agregar Paciente
         </Button>
       </div>
 
-      {filteredPacientes.length === 0 ? (
+      {filteredPatients.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
           {search ? 'No se encontraron pacientes' : 'No hay pacientes registrados'}
         </div>
@@ -105,20 +105,20 @@ export function PacienteTable({ initialPacientes }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPacientes.map((paciente) => (
-                <TableRow key={paciente.id}>
-                  <TableCell className="font-medium">{paciente.nombre}</TableCell>
-                  <TableCell>{paciente.historia_clinica || '-'}</TableCell>
-                  <TableCell>{paciente.telefono || '-'}</TableCell>
+              {filteredPatients.map((patient) => (
+                <TableRow key={patient.id}>
+                  <TableCell className="font-medium">{patient.name}</TableCell>
+                  <TableCell>{patient.medical_record || '-'}</TableCell>
+                  <TableCell>{patient.phone || '-'}</TableCell>
                   <TableCell>
-                    {new Date(paciente.created_at).toLocaleDateString('es-CO')}
+                    {new Date(patient.created_at).toLocaleDateString('es-CO')}
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(paciente)}>
+                      <Button variant="ghost" size="icon" onClick={() => handleEdit(patient)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => setDeletingPaciente(paciente)}>
+                      <Button variant="ghost" size="icon" onClick={() => setDeletingPatient(patient)}>
                         <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </div>
@@ -130,19 +130,19 @@ export function PacienteTable({ initialPacientes }: Props) {
         </div>
       )}
 
-      <PacienteForm
+      <PatientForm
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        paciente={editingPaciente}
+        patient={editingPatient}
         onSuccess={handleFormSuccess}
       />
 
-      <PacienteDialog
-        open={!!deletingPaciente}
-        onOpenChange={(open) => !open && setDeletingPaciente(null)}
+      <PatientDialog
+        open={!!deletingPatient}
+        onOpenChange={(open) => !open && setDeletingPatient(null)}
         onConfirm={handleDelete}
         title="Eliminar Paciente"
-        description={`¿Estás seguro de eliminar a ${deletingPaciente?.nombre}? Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro de eliminar a ${deletingPatient?.name}? Esta acción no se puede deshacer.`}
       />
     </div>
   )

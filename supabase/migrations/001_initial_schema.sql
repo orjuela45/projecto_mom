@@ -1,3 +1,9 @@
+-- ============================================
+-- MomCitas Database Schema
+-- All table/column names in English
+-- UI labels in Spanish (handled in frontend)
+-- ============================================
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -15,52 +21,52 @@ CREATE TABLE profiles (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Especialidades catalog
-CREATE TABLE especialidades (
+-- Specialties catalog
+CREATE TABLE specialties (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  nombre TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL UNIQUE,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
--- Lugares catalog
-CREATE TABLE lugares (
+-- Locations catalog
+CREATE TABLE locations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  nombre TEXT NOT NULL,
-  direccion TEXT,
+  name TEXT NOT NULL,
+  address TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
--- Pacientes
-CREATE TABLE pacientes (
+-- Patients
+CREATE TABLE patients (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  nombre TEXT NOT NULL,
-  historia_clinica TEXT,
-  telefono TEXT,
+  name TEXT NOT NULL,
+  medical_record TEXT,
+  phone TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
--- Citas
-CREATE TABLE citas (
+-- Appointments
+CREATE TABLE appointments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  fecha DATE NOT NULL,
-  hora_cita TIME NOT NULL,
-  hora_salida TIME,
-  paciente_id UUID NOT NULL REFERENCES pacientes(id),
-  especialidad_id UUID NOT NULL REFERENCES especialidades(id),
-  lugar_id UUID REFERENCES lugares(id),
-  acompanante TEXT,
-  estado TEXT NOT NULL DEFAULT 'pendiente' CHECK (estado IN ('pendiente', 'atendido', 'cancelado', 'reprogramado')),
-  historia_clinica TEXT,
-  observaciones TEXT,
+  date DATE NOT NULL,
+  appointment_time TIME NOT NULL,
+  departure_time TIME,
+  patient_id UUID NOT NULL REFERENCES patients(id),
+  specialty_id UUID NOT NULL REFERENCES specialties(id),
+  location_id UUID REFERENCES locations(id),
+  companion TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'cancelled', 'rescheduled')),
+  medical_record TEXT,
+  notes TEXT,
   created_by UUID REFERENCES profiles(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -70,47 +76,47 @@ CREATE TABLE citas (
 -- ============================================
 -- INDEXES
 -- ============================================
-CREATE INDEX idx_citas_fecha ON citas(fecha);
-CREATE INDEX idx_citas_paciente ON citas(paciente_id);
-CREATE INDEX idx_citas_estado ON citas(estado);
+CREATE INDEX idx_appointments_date ON appointments(date);
+CREATE INDEX idx_appointments_patient ON appointments(patient_id);
+CREATE INDEX idx_appointments_status ON appointments(status);
 
 -- ============================================
 -- ROW LEVEL SECURITY
 -- ============================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE especialidades ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lugares ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pacientes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE citas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE specialties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
 
 -- profiles: users own their data
 CREATE POLICY "profiles_select" ON profiles FOR SELECT TO authenticated USING (auth.uid() = id);
 CREATE POLICY "profiles_update" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
 CREATE POLICY "profiles_insert" ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
 
--- especialidades: read all (non-deleted), write own
-CREATE POLICY "especialidades_select" ON especialidades FOR SELECT TO authenticated USING (deleted_at IS NULL);
-CREATE POLICY "especialidades_insert" ON especialidades FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "especialidades_update" ON especialidades FOR UPDATE TO authenticated USING (auth.uid() = created_by);
-CREATE POLICY "especialidades_delete" ON especialidades FOR DELETE TO authenticated USING (auth.uid() = created_by);
+-- specialties: read all (non-deleted), write own
+CREATE POLICY "specialties_select" ON specialties FOR SELECT TO authenticated USING (deleted_at IS NULL);
+CREATE POLICY "specialties_insert" ON specialties FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "specialties_update" ON specialties FOR UPDATE TO authenticated USING (auth.uid() = created_by);
+CREATE POLICY "specialties_delete" ON specialties FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
--- lugares: read all (non-deleted), write own
-CREATE POLICY "lugares_select" ON lugares FOR SELECT TO authenticated USING (deleted_at IS NULL);
-CREATE POLICY "lugares_insert" ON lugares FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "lugares_update" ON lugares FOR UPDATE TO authenticated USING (auth.uid() = created_by);
-CREATE POLICY "lugares_delete" ON lugares FOR DELETE TO authenticated USING (auth.uid() = created_by);
+-- locations: read all (non-deleted), write own
+CREATE POLICY "locations_select" ON locations FOR SELECT TO authenticated USING (deleted_at IS NULL);
+CREATE POLICY "locations_insert" ON locations FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "locations_update" ON locations FOR UPDATE TO authenticated USING (auth.uid() = created_by);
+CREATE POLICY "locations_delete" ON locations FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
--- pacientes: read/write own
-CREATE POLICY "pacientes_select" ON pacientes FOR SELECT TO authenticated USING (deleted_at IS NULL AND auth.uid() = created_by);
-CREATE POLICY "pacientes_insert" ON pacientes FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "pacientes_update" ON pacientes FOR UPDATE TO authenticated USING (auth.uid() = created_by);
-CREATE POLICY "pacientes_delete" ON pacientes FOR DELETE TO authenticated USING (auth.uid() = created_by);
+-- patients: read/write own
+CREATE POLICY "patients_select" ON patients FOR SELECT TO authenticated USING (deleted_at IS NULL AND auth.uid() = created_by);
+CREATE POLICY "patients_insert" ON patients FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "patients_update" ON patients FOR UPDATE TO authenticated USING (auth.uid() = created_by);
+CREATE POLICY "patients_delete" ON patients FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
--- citas: read/write own
-CREATE POLICY "citas_select" ON citas FOR SELECT TO authenticated USING (deleted_at IS NULL AND auth.uid() = created_by);
-CREATE POLICY "citas_insert" ON citas FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "citas_update" ON citas FOR UPDATE TO authenticated USING (auth.uid() = created_by);
-CREATE POLICY "citas_delete" ON citas FOR DELETE TO authenticated USING (auth.uid() = created_by);
+-- appointments: read/write own
+CREATE POLICY "appointments_select" ON appointments FOR SELECT TO authenticated USING (deleted_at IS NULL AND auth.uid() = created_by);
+CREATE POLICY "appointments_insert" ON appointments FOR INSERT TO authenticated WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "appointments_update" ON appointments FOR UPDATE TO authenticated USING (auth.uid() = created_by);
+CREATE POLICY "appointments_delete" ON appointments FOR DELETE TO authenticated USING (auth.uid() = created_by);
 
 -- ============================================
 -- TRIGGERS
