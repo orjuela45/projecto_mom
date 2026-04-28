@@ -1,4 +1,4 @@
-import { AppointmentList } from '@/components/appointments/appointment-list'
+import AppointmentList from '@/components/appointments/appointment-list'
 
 export default function CitasPage() {
   return (

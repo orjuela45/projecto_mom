@@ -1,4 +1,4 @@
-import { ConfigList } from '@/components/configuracion/config-list'
+import ConfigList from '@/components/configuracion/config-list'
 
 export default function ConfiguracionPage() {
   return (
