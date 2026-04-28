@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { Appointment, Patient, Specialty, Location } from '@/types/database'
+import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
 import {
   Dialog,
   DialogContent,
@@ -37,19 +37,13 @@ const appointmentSchema = z.object({
 
 type FormData = z.infer<typeof appointmentSchema>
 
-interface AppointmentWithRelations extends Appointment {
-  patients?: { id: string; name: string } | null
-  specialties?: { id: string; name: string } | null
-  locations?: { id: string; name: string } | null
-}
-
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   appointment: AppointmentWithRelations | null
-  patients: Patient[]
-  specialties: Specialty[]
-  locations: Location[]
+  patients: PatientSelect[]
+  specialties: SpecialtySelect[]
+  locations: LocationSelect[]
   onSuccess: (appointment: AppointmentWithRelations) => void
 }
 

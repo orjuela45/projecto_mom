@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Appointment, Patient, Specialty, Location } from '@/types/database'
+import { Appointment } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { AppointmentForm } from './appointment-form'
+import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
 import {
   Table,
   TableBody,
@@ -24,17 +25,11 @@ import {
 import { Plus, Calendar, MoreHorizontal, Pencil, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface AppointmentWithRelations extends Appointment {
-  patients: { id: string; name: string } | null
-  specialties: { id: string; name: string } | null
-  locations: { id: string; name: string } | null
-}
-
 interface Props {
   initialAppointments: AppointmentWithRelations[]
-  patients: Patient[]
-  specialties: Specialty[]
-  locations: Location[]
+  patients: PatientSelect[]
+  specialties: SpecialtySelect[]
+  locations: LocationSelect[]
 }
 
 const STATUSES = ['pending', 'completed', 'cancelled', 'rescheduled']
@@ -165,7 +160,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger>
                           <Button variant="ghost" size="icon">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
