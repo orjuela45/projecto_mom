@@ -33,9 +33,9 @@ export function Sidebar() {
 
   return (
     <div className="flex flex-col w-64 bg-slate-900">
-      <div className="flex h-16 items-center px-4 border-b border-slate-800">
-        <h1 className="text-xl font-bold text-white">MomCitas</h1>
-      </div>
+      <Link href="/dashboard" className="flex h-16 items-center px-4 border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+        <h1 className="text-xl font-bold text-white cursor-pointer">MomCitas</h1>
+      </Link>
 
       <nav className="flex-1 px-2 py-4 space-y-1">
         {navigation.map((item) => {

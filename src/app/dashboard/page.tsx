@@ -18,38 +18,38 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Header */}
-      <div>
+      <div className="pb-4">
         <h1 className="text-4xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-1">
+        <p className="text-slate-600 mt-2 text-lg">
           Conectado como: {user.email}
         </p>
       </div>
 
       {/* Simple Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white rounded-lg shadow p-8 border border-slate-200">
           <h3 className="font-semibold text-slate-900">Estado</h3>
           <p className="text-green-600 mt-2">✓ Autenticado correctamente</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-slate-200">
+        <div className="bg-white rounded-lg shadow p-8 border border-slate-200">
           <h3 className="font-semibold text-slate-900">Usuario</h3>
           <p className="text-slate-600 mt-2">{user.email}</p>
         </div>
       </div>
 
       {/* Quick Links */}
-      <div className="space-y-3">
-        <a href="/dashboard/pacientes" className="block p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+      <div className="space-y-4">
+        <a href="/dashboard/pacientes" className="block p-6 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
           <h3 className="font-medium text-blue-900">Pacientes →</h3>
         </a>
-        <a href="/dashboard/citas" className="block p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
           <h3 className="font-medium text-green-900">Citas →</h3>
         </a>
-        <a href="/dashboard/configuracion" className="block p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
-          <h3 className="font-medium text-purple-900">Configuración →</h3>
+        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+          <h3 className="font-medium text-green-900">Citas →</h3>
         </a>
       </div>
     </div>

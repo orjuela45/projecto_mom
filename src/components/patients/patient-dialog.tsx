@@ -19,7 +19,7 @@ interface Props {
   description: string
 }
 
-export function PacienteDialog({ open, onOpenChange, onConfirm, title, description }: Props) {
+export function PatientDialog({ open, onOpenChange, onConfirm, title, description }: Props) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
