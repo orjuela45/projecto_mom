@@ -72,8 +72,8 @@ export function PatientTable({ initialPatients }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="relative w-64">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="relative w-full md:w-64">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
           <Input
             placeholder="Buscar paciente..."
@@ -82,7 +82,7 @@ export function PatientTable({ initialPatients }: Props) {
             className="pl-8"
           />
         </div>
-        <Button onClick={() => { setEditingPatient(null); setIsFormOpen(true) }}>
+        <Button onClick={() => { setEditingPatient(null); setIsFormOpen(true) }} className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Agregar Paciente
         </Button>
@@ -93,15 +93,15 @@ export function PatientTable({ initialPatients }: Props) {
           {search ? 'No se encontraron pacientes' : 'No hay pacientes registrados'}
         </div>
       ) : (
-        <div className="border rounded-lg">
+        <div className="border rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Historia Clínica</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Fecha de Creación</TableHead>
-                <TableHead className="w-32">Acciones</TableHead>
+                <TableHead className="whitespace-nowrap">Nombre</TableHead>
+                <TableHead className="whitespace-nowrap">Historia Clínica</TableHead>
+                <TableHead className="whitespace-nowrap">Teléfono</TableHead>
+                <TableHead className="whitespace-nowrap">Fecha de Creación</TableHead>
+                <TableHead className="w-32 whitespace-nowrap">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

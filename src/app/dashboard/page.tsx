@@ -21,8 +21,8 @@ export default async function DashboardPage() {
     <div className="space-y-10">
       {/* Header */}
       <div className="pb-4">
-        <h1 className="text-4xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-600 mt-2 text-lg">
+        <h1 className="text-2xl md:text-4xl font-bold text-slate-900">Dashboard</h1>
+        <p className="text-sm md:text-lg text-slate-600 mt-2">
           Conectado como: {user.email}
         </p>
       </div>
@@ -42,13 +42,13 @@ export default async function DashboardPage() {
 
       {/* Quick Links */}
       <div className="space-y-4">
-        <a href="/dashboard/pacientes" className="block p-6 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+        <a href="/dashboard/pacientes" className="block p-6 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors w-full">
           <h3 className="font-medium text-blue-900">Pacientes →</h3>
         </a>
-        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors w-full">
           <h3 className="font-medium text-green-900">Citas →</h3>
         </a>
-        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors w-full">
           <h3 className="font-medium text-green-900">Citas →</h3>
         </a>
       </div>

@@ -95,21 +95,21 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center gap-4 flex-wrap">
-        <div className="flex gap-2 items-center flex-wrap">
-          <div className="relative">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col md:flex-row gap-2 items-center w-full md:w-auto">
+          <div className="relative w-full md:w-40">
             <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               type="date"
               value={filterDate}
               onChange={(e) => setFilterDate(e.target.value)}
-              className="pl-8 w-40"
+              className="pl-8 w-full"
             />
           </div>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="border rounded px-3 py-2 text-sm"
+            className="border rounded px-3 py-2 text-sm w-full md:w-auto"
           >
             <option value="">Todos los estados</option>
             {STATUSES.map(s => (
@@ -117,7 +117,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
             ))}
           </select>
         </div>
-        <Button onClick={() => { setEditingAppointment(null); setIsFormOpen(true) }}>
+        <Button onClick={() => { setEditingAppointment(null); setIsFormOpen(true) }} className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Nueva Cita
         </Button>
@@ -132,13 +132,13 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha</TableHead>
-                <TableHead>Hora</TableHead>
-                <TableHead>Paciente</TableHead>
-                <TableHead>Especialidad</TableHead>
-                <TableHead>Lugar</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="w-24">Acciones</TableHead>
+                <TableHead className="whitespace-nowrap">Fecha</TableHead>
+                <TableHead className="whitespace-nowrap">Hora</TableHead>
+                <TableHead className="whitespace-nowrap">Paciente</TableHead>
+                <TableHead className="whitespace-nowrap">Especialidad</TableHead>
+                <TableHead className="whitespace-nowrap">Lugar</TableHead>
+                <TableHead className="whitespace-nowrap">Estado</TableHead>
+                <TableHead className="w-24 whitespace-nowrap">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

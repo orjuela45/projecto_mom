@@ -7,14 +7,14 @@ export default function ConfiguracionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Configuración</h1>
-        <p className="text-slate-500">Gestiona especialidades y ubicaciones</p>
+        <h1 className="text-2xl md:text-3xl font-bold">Configuración</h1>
+        <p className="text-sm md:text-base text-slate-500">Gestiona especialidades y ubicaciones</p>
       </div>
 
       <Tabs defaultValue="specialties" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="specialties">Especialidades</TabsTrigger>
-          <TabsTrigger value="locations">Ubicaciones</TabsTrigger>
+        <TabsList className="w-full md:w-auto">
+          <TabsTrigger value="specialties" className="flex-1 md:flex-none">Especialidades</TabsTrigger>
+          <TabsTrigger value="locations" className="flex-1 md:flex-none">Ubicaciones</TabsTrigger>
         </TabsList>
 
         <TabsContent value="specialties" className="space-y-4">
