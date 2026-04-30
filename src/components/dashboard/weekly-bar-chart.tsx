@@ -31,10 +31,7 @@ export function WeeklyBarChart({ appointments }: WeeklyBarChartProps) {
                 allowDecimals={false}
               />
               <Tooltip
-                formatter={(value: number, name: string, props: any) => [
-                  `${value} citas`,
-                  props.payload.date
-                ]}
+                formatter={(value: any) => [`${value} citas`, 'Cantidad']}
                 contentStyle={{
                   backgroundColor: 'white',
                   border: '1px solid #e2e8f0',

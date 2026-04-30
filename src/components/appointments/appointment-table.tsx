@@ -109,10 +109,10 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   const [appointments, setAppointments] = useState(initialAppointments)
   const [filterDateRange, setFilterDateRange] = useState<DateRange | null>(null)
   const [filterQuickRange, setFilterQuickRange] = useState<QuickRange>(null)
-  const [filterPatientId, setFilterPatientId] = useState('')
-  const [filterSpecialtyId, setFilterSpecialtyId] = useState('')
-  const [filterLocationId, setFilterLocationId] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
+  const [filterPatientId, setFilterPatientId] = useState<string | null>('')
+  const [filterSpecialtyId, setFilterSpecialtyId] = useState<string | null>('')
+  const [filterLocationId, setFilterLocationId] = useState<string | null>('')
+  const [filterStatus, setFilterStatus] = useState<string | null>('')
   const [showFilters, setShowFilters] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<AppointmentWithRelations | null>(null)
@@ -136,7 +136,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
     filterSpecialtyId,
     filterLocationId,
     filterStatus
-  ].filter(Boolean).length
+  ].filter(v => v !== null && v !== '').length
 
   function handleQuickRangeSelect(rangeType: QuickRange) {
     setFilterQuickRange(rangeType)
@@ -151,10 +151,10 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   function handleClearFilters() {
     setFilterDateRange(null)
     setFilterQuickRange(null)
-    setFilterPatientId('')
-    setFilterSpecialtyId('')
-    setFilterLocationId('')
-    setFilterStatus('')
+    setFilterPatientId(null)
+    setFilterSpecialtyId(null)
+    setFilterLocationId(null)
+    setFilterStatus(null)
   }
 
   function handleClearDateRange() {
@@ -307,7 +307,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Paciente</label>
-            <Select value={filterPatientId} onValueChange={setFilterPatientId}>
+            <Select value={filterPatientId || ''} onValueChange={setFilterPatientId}>
               <SelectTrigger className="h-8">
                 <SelectValue placeholder="Todos los pacientes" />
               </SelectTrigger>
@@ -324,7 +324,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Especialidad</label>
-            <Select value={filterSpecialtyId} onValueChange={setFilterSpecialtyId}>
+            <Select value={filterSpecialtyId || ''} onValueChange={setFilterSpecialtyId}>
               <SelectTrigger className="h-8">
                 <SelectValue placeholder="Todas las especialidades" />
               </SelectTrigger>
@@ -341,7 +341,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Lugar</label>
-            <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+            <Select value={filterLocationId || ''} onValueChange={setFilterLocationId}>
               <SelectTrigger className="h-8">
                 <SelectValue placeholder="Todos los lugares" />
               </SelectTrigger>
@@ -358,7 +358,7 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Estado</label>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <Select value={filterStatus || ''} onValueChange={setFilterStatus}>
               <SelectTrigger className="h-8">
                 <SelectValue placeholder="Todos los estados" />
               </SelectTrigger>
