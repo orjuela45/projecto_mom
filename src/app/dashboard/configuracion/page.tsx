@@ -1,14 +1,18 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { BackButton } from '@/components/back-button'
 import SpecialtyList from '@/components/configuracion/specialty-list'
 import LocationList from '@/components/configuracion/location-list'
 
 export default function ConfiguracionPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold">Configuración</h1>
-        <p className="text-sm md:text-base text-slate-500">Gestiona especialidades y ubicaciones</p>
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900">Configuración</h1>
+          <p className="text-sm md:text-base text-slate-500">Gestiona especialidades y ubicaciones</p>
+        </div>
+        <BackButton />
       </div>
 
       <Tabs defaultValue="specialties" className="space-y-4">

@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { MetricsCards } from '@/components/dashboard/metrics-cards'
+import { StatusPieChart } from '@/components/dashboard/status-pie-chart'
+import { WeeklyBarChart } from '@/components/dashboard/weekly-bar-chart'
+import { getTodayMetrics } from '@/lib/dashboard-metrics'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  // Simple test - just check if we can fetch
   const { data: { user } } = await supabase.auth.getUser()
   
   if (!user) {
@@ -17,40 +20,37 @@ export default async function DashboardPage() {
     )
   }
 
+  const { data: appointments } = await supabase
+    .from('appointments')
+    .select(`
+      *,
+      patients (id, name),
+      specialties (id, name),
+      locations (id, name)
+    `)
+    .is('deleted_at', null)
+
+  const appointmentsList = appointments || []
+  const metrics = getTodayMetrics(appointmentsList)
+
+  const userName = user.email?.split('@')[0] || 'Usuario'
+
   return (
-    <div className="space-y-10">
-      {/* Header */}
+    <div className="space-y-8">
       <div className="pb-4">
-        <h1 className="text-2xl md:text-4xl font-bold text-slate-900">Dashboard</h1>
+        <h1 className="text-2xl md:text-4xl font-bold text-slate-900">
+          Hola, {userName} 👋
+        </h1>
         <p className="text-sm md:text-lg text-slate-600 mt-2">
-          Conectado como: {user.email}
+          Aquí está el resumen de citas de MomCitas
         </p>
       </div>
 
-      {/* Simple Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white rounded-lg shadow p-8 border border-slate-200">
-          <h3 className="font-semibold text-slate-900">Estado</h3>
-          <p className="text-green-600 mt-2">✓ Autenticado correctamente</p>
-        </div>
+      <MetricsCards metrics={metrics} />
 
-        <div className="bg-white rounded-lg shadow p-8 border border-slate-200">
-          <h3 className="font-semibold text-slate-900">Usuario</h3>
-          <p className="text-slate-600 mt-2">{user.email}</p>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="space-y-4">
-        <a href="/dashboard/pacientes" className="block p-6 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors w-full">
-          <h3 className="font-medium text-blue-900">Pacientes →</h3>
-        </a>
-        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors w-full">
-          <h3 className="font-medium text-green-900">Citas →</h3>
-        </a>
-        <a href="/dashboard/citas" className="block p-6 bg-green-50 hover:bg-green-100 rounded-lg transition-colors w-full">
-          <h3 className="font-medium text-green-900">Citas →</h3>
-        </a>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <StatusPieChart appointments={appointmentsList} />
+        <WeeklyBarChart appointments={appointmentsList} />
       </div>
     </div>
   )

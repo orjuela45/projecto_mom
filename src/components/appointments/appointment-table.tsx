@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Appointment } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import { AppointmentForm } from './appointment-form'
 import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
@@ -22,8 +21,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Calendar, MoreHorizontal, Pencil, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Plus, MoreHorizontal, Pencil, CheckCircle, XCircle, RefreshCw, Filter, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 interface Props {
   initialAppointments: AppointmentWithRelations[]
@@ -48,10 +55,65 @@ const statusColors: Record<string, string> = {
   rescheduled: 'bg-blue-100 text-blue-800',
 }
 
+type QuickRange = 'week' | 'next-week' | '7days' | 'month' | null
+
+interface DateRange {
+  start: string
+  end: string
+}
+
+function getDateRange(rangeType: string): DateRange {
+  const now = new Date()
+  const today = now.toISOString().split('T')[0]
+  
+  switch (rangeType) {
+    case 'week': {
+      const startOfWeek = new Date(now)
+      startOfWeek.setDate(now.getDate() - now.getDay())
+      const endOfWeek = new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000)
+      return {
+        start: startOfWeek.toISOString().split('T')[0],
+        end: endOfWeek.toISOString().split('T')[0]
+      }
+    }
+    case 'next-week': {
+      const startOfNextWeek = new Date(now)
+      startOfNextWeek.setDate(now.getDate() - now.getDay() + 7)
+      const endOfNextWeek = new Date(startOfNextWeek.getTime() + 6 * 24 * 60 * 60 * 1000)
+      return {
+        start: startOfNextWeek.toISOString().split('T')[0],
+        end: endOfNextWeek.toISOString().split('T')[0]
+      }
+    }
+    case '7days': {
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      return {
+        start: sevenDaysAgo.toISOString().split('T')[0],
+        end: today
+      }
+    }
+    case 'month': {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+      return {
+        start: startOfMonth.toISOString().split('T')[0],
+        end: endOfMonth.toISOString().split('T')[0]
+      }
+    }
+    default:
+      return { start: '', end: '' }
+  }
+}
+
 export function AppointmentTable({ initialAppointments, patients, specialties, locations }: Props) {
   const [appointments, setAppointments] = useState(initialAppointments)
-  const [filterDate, setFilterDate] = useState('')
+  const [filterDateRange, setFilterDateRange] = useState<DateRange | null>(null)
+  const [filterQuickRange, setFilterQuickRange] = useState<QuickRange>(null)
+  const [filterPatientId, setFilterPatientId] = useState('')
+  const [filterSpecialtyId, setFilterSpecialtyId] = useState('')
+  const [filterLocationId, setFilterLocationId] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<AppointmentWithRelations | null>(null)
   const [statusingAppointment, setStatusingAppointment] = useState<AppointmentWithRelations | null>(null)
@@ -59,10 +121,46 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   const supabase = createClient()
 
   const filteredAppointments = appointments.filter(appt => {
-    if (filterDate && appt.date !== filterDate) return false
+    if (filterDateRange?.start && appt.date < filterDateRange.start) return false
+    if (filterDateRange?.end && appt.date > filterDateRange.end) return false
+    if (filterPatientId && appt.patient_id !== filterPatientId) return false
+    if (filterSpecialtyId && appt.specialty_id !== filterSpecialtyId) return false
+    if (filterLocationId && appt.location_id !== filterLocationId) return false
     if (filterStatus && appt.status !== filterStatus) return false
     return true
   })
+
+  const activeFiltersCount = [
+    filterDateRange,
+    filterPatientId,
+    filterSpecialtyId,
+    filterLocationId,
+    filterStatus
+  ].filter(Boolean).length
+
+  function handleQuickRangeSelect(rangeType: QuickRange) {
+    setFilterQuickRange(rangeType)
+    if (rangeType) {
+      const range = getDateRange(rangeType)
+      setFilterDateRange(range)
+    } else {
+      setFilterDateRange(null)
+    }
+  }
+
+  function handleClearFilters() {
+    setFilterDateRange(null)
+    setFilterQuickRange(null)
+    setFilterPatientId('')
+    setFilterSpecialtyId('')
+    setFilterLocationId('')
+    setFilterStatus('')
+  }
+
+  function handleClearDateRange() {
+    setFilterDateRange(null)
+    setFilterQuickRange(null)
+  }
 
   async function handleStatusChange(action: 'completed' | 'cancelled') {
     if (!statusingAppointment) return
@@ -96,36 +194,190 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="flex flex-col md:flex-row gap-2 items-center w-full md:w-auto">
-          <div className="relative w-full md:w-40">
-            <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
-            <Input
-              type="date"
-              value={filterDate}
-              onChange={(e) => setFilterDate(e.target.value)}
-              className="pl-8 w-full"
-            />
-          </div>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="border rounded px-3 py-2 text-sm w-full md:w-auto"
-          >
-            <option value="">Todos los estados</option>
-            {STATUSES.map(s => (
-              <option key={s} value={s}>{statusLabels[s]}</option>
-            ))}
-          </select>
-        </div>
+        <Button 
+          variant="outline" 
+          onClick={() => setShowFilters(!showFilters)}
+          className="md:hidden w-full"
+        >
+          <Filter className="mr-2 h-4 w-4" />
+          {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
+          {activeFiltersCount > 0 && (
+            <Badge className="ml-2">{activeFiltersCount}</Badge>
+          )}
+        </Button>
+
         <Button onClick={() => { setEditingAppointment(null); setIsFormOpen(true) }} className="w-full md:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Nueva Cita
         </Button>
       </div>
 
+      <div className={cn(
+        "space-y-4 p-4 bg-slate-50 rounded-lg border",
+        showFilters ? "block" : "hidden md:block"
+      )}>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h3 className="text-sm font-semibold text-slate-700">Filtros avanzados</h3>
+          <div className="flex items-center gap-2">
+            {activeFiltersCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {activeFiltersCount} {activeFiltersCount === 1 ? 'filtro' : 'filtros'} activos
+              </Badge>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleClearFilters}
+              disabled={activeFiltersCount === 0}
+              className="h-7 text-xs"
+            >
+              <X className="mr-1 h-3 w-3" />
+              Limpiar filtros
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-600">Rango de fechas</label>
+            <div className="space-y-2">
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant={filterQuickRange === 'week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleQuickRangeSelect('week')}
+                  className="h-7 text-xs flex-1"
+                >
+                  Esta semana
+                </Button>
+                <Button
+                  variant={filterQuickRange === 'next-week' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleQuickRangeSelect('next-week')}
+                  className="h-7 text-xs flex-1"
+                >
+                  Próxima semana
+                </Button>
+                <Button
+                  variant={filterQuickRange === '7days' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleQuickRangeSelect('7days')}
+                  className="h-7 text-xs flex-1"
+                >
+                  Últimos 7 días
+                </Button>
+                <Button
+                  variant={filterQuickRange === 'month' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => handleQuickRangeSelect('month')}
+                  className="h-7 text-xs flex-1"
+                >
+                  Este mes
+                </Button>
+              </div>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="date"
+                  value={filterDateRange?.start || ''}
+                  onChange={(e) => setFilterDateRange(prev => ({ ...prev!, start: e.target.value, end: prev?.end || '' }))}
+                  className="h-8 text-xs flex-1"
+                  placeholder="Inicio"
+                />
+                <span className="text-slate-400">-</span>
+                <Input
+                  type="date"
+                  value={filterDateRange?.end || ''}
+                  onChange={(e) => setFilterDateRange(prev => ({ ...prev!, start: prev?.start || '', end: e.target.value }))}
+                  className="h-8 text-xs flex-1"
+                  placeholder="Fin"
+                />
+                {filterDateRange && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleClearDateRange}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-600">Paciente</label>
+            <Select value={filterPatientId} onValueChange={setFilterPatientId}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Todos los pacientes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los pacientes</SelectItem>
+                {patients.map(patient => (
+                  <SelectItem key={patient.id} value={patient.id}>
+                    {patient.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-600">Especialidad</label>
+            <Select value={filterSpecialtyId} onValueChange={setFilterSpecialtyId}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Todas las especialidades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas las especialidades</SelectItem>
+                {specialties.map(specialty => (
+                  <SelectItem key={specialty.id} value={specialty.id}>
+                    {specialty.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-600">Lugar</label>
+            <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Todos los lugares" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los lugares</SelectItem>
+                {locations.map(location => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-600">Estado</label>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-8">
+                <SelectValue placeholder="Todos los estados" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los estados</SelectItem>
+                {STATUSES.map(status => (
+                  <SelectItem key={status} value={status}>
+                    {statusLabels[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       {filteredAppointments.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
-          {filterDate || filterStatus ? 'No hay citas con esos filtros' : 'No hay citas registradas'}
+          {activeFiltersCount > 0 ? 'No hay citas con estos filtros' : 'No hay citas registradas'}
         </div>
       ) : (
         <div className="border rounded-lg overflow-x-auto">
