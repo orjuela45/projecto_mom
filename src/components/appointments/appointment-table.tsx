@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Combobox } from '@/components/ui/combobox'
 import { Plus, MoreHorizontal, Pencil, CheckCircle, XCircle, RefreshCw, Filter, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -120,7 +121,11 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   const [statusAction, setStatusAction] = useState<'completed' | 'cancelled' | null>(null)
   const supabase = createClient()
 
-  const filteredAppointments = appointments.filter(appt => {
+  const sortedAppointments = [...appointments].sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime()
+  })
+
+  const filteredAppointments = sortedAppointments.filter(appt => {
     if (filterDateRange?.start && appt.date < filterDateRange.start) return false
     if (filterDateRange?.end && appt.date > filterDateRange.end) return false
     if (filterPatientId && appt.patient_id !== filterPatientId) return false
@@ -307,53 +312,38 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Paciente</label>
-            <Select value={filterPatientId || ''} onValueChange={setFilterPatientId}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Todos los pacientes" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los pacientes</SelectItem>
-                {patients.map(patient => (
-                  <SelectItem key={patient.id} value={patient.id}>
-                    {patient.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={[{ value: '', label: 'Todos los pacientes' }, ...patients.map(p => ({ value: p.id, label: p.name }))]}
+              value={filterPatientId || ''}
+              onChange={setFilterPatientId}
+              placeholder="Todos los pacientes"
+              searchPlaceholder="Buscar paciente..."
+              emptyMessage="No se encontró el paciente"
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Especialidad</label>
-            <Select value={filterSpecialtyId || ''} onValueChange={setFilterSpecialtyId}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Todas las especialidades" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas las especialidades</SelectItem>
-                {specialties.map(specialty => (
-                  <SelectItem key={specialty.id} value={specialty.id}>
-                    {specialty.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={[{ value: '', label: 'Todas las especialidades' }, ...specialties.map(s => ({ value: s.id, label: s.name }))]}
+              value={filterSpecialtyId || ''}
+              onChange={setFilterSpecialtyId}
+              placeholder="Todas las especialidades"
+              searchPlaceholder="Buscar especialidad..."
+              emptyMessage="No se encontró la especialidad"
+            />
           </div>
 
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-600">Lugar</label>
-            <Select value={filterLocationId || ''} onValueChange={setFilterLocationId}>
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Todos los lugares" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los lugares</SelectItem>
-                {locations.map(location => (
-                  <SelectItem key={location.id} value={location.id}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              options={[{ value: '', label: 'Todos los lugares' }, ...locations.map(l => ({ value: l.id, label: l.name }))]}
+              value={filterLocationId || ''}
+              onChange={setFilterLocationId}
+              placeholder="Todos los lugares"
+              searchPlaceholder="Buscar lugar..."
+              emptyMessage="No se encontró el lugar"
+            />
           </div>
 
           <div className="space-y-2">
@@ -400,7 +390,14 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
                   <TableCell>{appt.appointment_time}</TableCell>
                   <TableCell className="font-medium">{appt.patients?.name || '-'}</TableCell>
                   <TableCell>{appt.specialties?.name || '-'}</TableCell>
-                  <TableCell>{appt.locations?.name || '-'}</TableCell>
+                  <TableCell>
+                    <div>
+                      <span className="font-medium">{appt.locations?.name || '-'}</span>
+                      {appt.locations?.address && (
+                        <p className="text-xs text-slate-500">{appt.locations.address}</p>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge className={statusColors[appt.status]}>
                       {statusLabels[appt.status]}
