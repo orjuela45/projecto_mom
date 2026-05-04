@@ -4,6 +4,7 @@ export type Specialty = Database['public']['Tables']['specialties']['Row']
 export type Location = Database['public']['Tables']['locations']['Row']
 export type Appointment = Database['public']['Tables']['appointments']['Row']
 export type Profile = Database['public']['Tables']['profiles']['Row']
+export type Eps = Database['public']['Tables']['eps']['Row']
 
 export type Json =
   | string
@@ -170,6 +171,31 @@ export interface Database {
           status?: string
           medical_record?: string | null
           notes?: string | null
+          updated_at?: string
+          deleted_at?: string | null
+        }
+      }
+      eps: {
+        Row: {
+          id: string
+          name: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_by?: string | null
           updated_at?: string
           deleted_at?: string | null
         }

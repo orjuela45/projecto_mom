@@ -56,6 +56,34 @@ const statusColors: Record<string, string> = {
   rescheduled: 'bg-blue-100 text-blue-800',
 }
 
+function getDayOfWeek(dateString: string): string {
+  // Parsear fecha manualmente para evitar timezone issues
+  const [year, month, dayNum] = dateString.split('T')[0].split('-').map(Number)
+  // Mes en JavaScript es 0-indexed (0 = Enero)
+  const date = new Date(year, month - 1, dayNum)
+  const dayName = date.toLocaleDateString('es-CO', { weekday: 'long' })
+  return dayName.charAt(0).toUpperCase() + dayName.slice(1)
+}
+
+// Parse fecha ISO sin timezone issues
+function formatDate(dateString: string): string {
+  if (!dateString) return ''
+  // Split ISO string y toma solo la fecha (YYYY-MM-DD)
+  const [year, month, day] = dateString.split('T')[0].split('-')
+  return `${day}/${month}/${year}`
+}
+
+// Format hora con rango si hay departure_time
+function formatTime(startTime: string, endTime?: string | null): string {
+  if (!startTime) return ''
+  if (endTime) {
+    // Extraer solo la hora del departure_time (HH:MM)
+    const endTimeOnly = endTime.split('T')[1]?.substring(0, 5) || endTime
+    return `${startTime} - ${endTimeOnly}`
+  }
+  return startTime
+}
+
 type QuickRange = 'week' | 'next-week' | '7days' | 'month' | null
 
 interface DateRange {
@@ -122,7 +150,16 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   const supabase = createClient()
 
   const sortedAppointments = [...appointments].sort((a, b) => {
-    return new Date(b.date).getTime() - new Date(a.date).getTime()
+    if (!a.date && !b.date) return 0
+    if (!a.date) return 1
+    if (!b.date) return -1
+    
+    // Comparar strings ISO directamente (YYYY-MM-DD es lexicográficamente comparable)
+    const dateCompare = a.date.localeCompare(b.date)
+    if (dateCompare !== 0) return dateCompare
+    
+    // Si misma fecha, por hora
+    return a.appointment_time.localeCompare(b.appointment_time)
   })
 
   const filteredAppointments = sortedAppointments.filter(appt => {
@@ -374,7 +411,8 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">Fecha</TableHead>
+                <TableHead className="whitespace-nowrap">Fecha Agendada</TableHead>
+                <TableHead className="whitespace-nowrap">Día</TableHead>
                 <TableHead className="whitespace-nowrap">Hora</TableHead>
                 <TableHead className="whitespace-nowrap">Paciente</TableHead>
                 <TableHead className="whitespace-nowrap">Especialidad</TableHead>
@@ -385,9 +423,18 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
             </TableHeader>
             <TableBody>
               {filteredAppointments.map((appt) => (
-                <TableRow key={appt.id}>
-                  <TableCell>{new Date(appt.date).toLocaleDateString('es-CO')}</TableCell>
-                  <TableCell>{appt.appointment_time}</TableCell>
+                <TableRow key={appt.id} className={!appt.date ? 'bg-yellow-50' : ''}>
+                  <TableCell>
+                    {appt.date ? formatDate(appt.date) : (
+                      <Badge variant="secondary">Sin fecha</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {appt.date ? getDayOfWeek(appt.date) : '-'}
+                  </TableCell>
+                  <TableCell>
+                    {formatTime(appt.appointment_time, appt.departure_time)}
+                  </TableCell>
                   <TableCell className="font-medium">{appt.patients?.name || '-'}</TableCell>
                   <TableCell>{appt.specialties?.name || '-'}</TableCell>
                   <TableCell>

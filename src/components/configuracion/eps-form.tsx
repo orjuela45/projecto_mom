@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/client'
-import { Patient } from '@/types/database'
+import { Eps } from '@/types/database'
 import {
   Dialog,
   DialogContent,
@@ -24,103 +24,76 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-const patientSchema = z.object({
+const epsSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
-  medical_record: z.string().optional(),
-  phone: z.string().optional(),
 })
 
-type FormData = z.infer<typeof patientSchema>
+type FormData = z.infer<typeof epsSchema>
 
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  patient: Patient | null
-  onSuccess: (patient: Patient) => void
+  eps: Eps | null
+  onSuccess: (eps: Eps) => void
 }
 
-export function PatientForm({ open, onOpenChange, patient, onSuccess }: Props) {
+export function EpsForm({ open, onOpenChange, eps, onSuccess }: Props) {
   const supabase = createClient()
-  const isEditing = !!patient
+  const isEditing = !!eps
   
   const form = useForm<FormData>({
-    resolver: zodResolver(patientSchema),
+    resolver: zodResolver(epsSchema),
     defaultValues: {
       name: '',
-      medical_record: '',
-      phone: '',
     },
   })
 
   useEffect(() => {
     if (open) {
-      if (patient) {
+      if (eps) {
         form.reset({
-          name: patient.name,
-          medical_record: patient.medical_record || '',
-          phone: patient.phone || '',
+          name: eps.name,
         })
       } else {
         form.reset({
           name: '',
-          medical_record: '',
-          phone: '',
         })
       }
     }
-  }, [open, patient, form])
+  }, [open, eps, form])
 
   async function onSubmit(data: FormData) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    if (data.medical_record) {
-      const { data: existingPatients } = await supabase
-        .from('patients')
-        .select('id')
-        .eq('medical_record', data.medical_record)
-        .is('deleted_at', null)
-      
-      if (existingPatients && existingPatients.length > 0) {
-        if (!isEditing || existingPatients[0].id !== patient.id) {
-          toast.error('Ya existe un paciente con esta historia clínica')
-          return
-        }
-      }
-    }
-
     if (isEditing) {
       const { data: updated, error } = await supabase
-        .from('patients')
+        .from('eps')
         .update({
           name: data.name,
-          medical_record: data.medical_record || null,
-          phone: data.phone || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', patient.id)
+        .eq('id', eps.id)
         .select()
         .single()
       
       if (error) {
-        toast.error('Error al actualizar paciente')
+        toast.error('Error al actualizar EPS')
       } else if (updated) {
         onSuccess(updated)
       }
     } else {
       const { data: created, error } = await supabase
-        .from('patients')
+        .from('eps')
         .insert({
           name: data.name,
-          medical_record: data.medical_record || null,
-          phone: data.phone || null,
           created_by: user.id,
         })
         .select()
         .single()
       
       if (error) {
-        toast.error('Error al crear paciente')
+        toast.error('Error al crear EPS')
       } else if (created) {
         onSuccess(created)
       }
@@ -132,7 +105,7 @@ export function PatientForm({ open, onOpenChange, patient, onSuccess }: Props) {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Editar Paciente' : 'Nuevo Paciente'}
+            {isEditing ? 'Editar EPS' : 'Nueva EPS'}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -144,33 +117,7 @@ export function PatientForm({ open, onOpenChange, patient, onSuccess }: Props) {
                 <FormItem>
                   <FormLabel>Nombre *</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nombre completo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="medical_record"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Historia Clínica</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Número de historia clínica" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teléfono</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Teléfono de contacto" {...field} />
+                    <Input placeholder="Ej: Sanitas" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -181,7 +128,7 @@ export function PatientForm({ open, onOpenChange, patient, onSuccess }: Props) {
                 Cancelar
               </Button>
               <Button type="submit">
-                {isEditing ? 'Guardar Cambios' : 'Crear Paciente'}
+                {isEditing ? 'Guardar Cambios' : 'Crear EPS'}
               </Button>
             </div>
           </form>

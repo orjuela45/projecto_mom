@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BackButton } from '@/components/back-button'
 import SpecialtyList from '@/components/configuracion/specialty-list'
 import LocationList from '@/components/configuracion/location-list'
+import EpsList from '@/components/configuracion/eps-list'
 
 export default function ConfiguracionPage() {
   return (
@@ -19,6 +20,7 @@ export default function ConfiguracionPage() {
         <TabsList className="w-full md:w-auto">
           <TabsTrigger value="specialties" className="flex-1 md:flex-none">Especialidades</TabsTrigger>
           <TabsTrigger value="locations" className="flex-1 md:flex-none">Ubicaciones</TabsTrigger>
+          <TabsTrigger value="eps" className="flex-1 md:flex-none">EPS</TabsTrigger>
         </TabsList>
 
         <TabsContent value="specialties" className="space-y-4">
@@ -45,6 +47,20 @@ export default function ConfiguracionPage() {
             </CardHeader>
             <CardContent>
               <LocationList />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="eps" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>EPS</CardTitle>
+              <CardDescription>
+                Gestiona las entidades promotoras de salud
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EpsList />
             </CardContent>
           </Card>
         </TabsContent>

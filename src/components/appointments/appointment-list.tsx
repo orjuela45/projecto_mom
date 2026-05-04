@@ -10,7 +10,7 @@ export default async function AppointmentList() {
       *,
       patients (id, name),
       specialties (id, name),
-      locations (id, name)
+      locations (id, name, address)
     `)
     .is('deleted_at', null)
     .order('date', { ascending: false })

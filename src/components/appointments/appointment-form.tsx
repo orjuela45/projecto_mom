@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
 import { toast } from 'sonner'
 
 const appointmentSchema = z.object({
@@ -211,12 +212,14 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                   <FormItem>
                     <FormLabel>Lugar</FormLabel>
                     <FormControl>
-                      <select {...field} className="border rounded px-3 py-2 w-full">
-                        <option value="">Seleccionar lugar</option>
-                        {locations.map(l => (
-                          <option key={l.id} value={l.id}>{l.name}</option>
-                        ))}
-                      </select>
+                      <Combobox
+                        options={locations.map(l => ({ value: l.id, label: l.name }))}
+                        value={field.value || ''}
+                        onChange={(value) => field.onChange(value || null)}
+                        placeholder="Seleccionar lugar"
+                        searchPlaceholder="Buscar lugar..."
+                        emptyMessage="No se encontró el lugar"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -231,12 +234,14 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                 <FormItem>
                   <FormLabel>Paciente *</FormLabel>
                   <FormControl>
-                    <select {...field} className="border rounded px-3 py-2 w-full">
-                      <option value="">Seleccionar paciente</option>
-                      {patients.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
+                    <Combobox
+                      options={patients.map(p => ({ value: p.id, label: p.name }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Seleccionar paciente"
+                      searchPlaceholder="Buscar por nombre..."
+                      emptyMessage="No se encontró el paciente"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -250,12 +255,14 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                 <FormItem>
                   <FormLabel>Especialidad *</FormLabel>
                   <FormControl>
-                    <select {...field} className="border rounded px-3 py-2 w-full">
-                      <option value="">Seleccionar especialidad</option>
-                      {specialties.map(s => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
+                    <Combobox
+                      options={specialties.map(s => ({ value: s.id, label: s.name }))}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Seleccionar especialidad"
+                      searchPlaceholder="Buscar especialidad..."
+                      emptyMessage="No se encontró la especialidad"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
