@@ -38,6 +38,7 @@ interface Props {
   patients: PatientSelect[]
   specialties: SpecialtySelect[]
   locations: LocationSelect[]
+  tab: 'unassigned' | 'scheduled'
 }
 
 const STATUSES = ['pending', 'completed', 'cancelled', 'rescheduled']
@@ -57,27 +58,21 @@ const statusColors: Record<string, string> = {
 }
 
 function getDayOfWeek(dateString: string): string {
-  // Parsear fecha manualmente para evitar timezone issues
   const [year, month, dayNum] = dateString.split('T')[0].split('-').map(Number)
-  // Mes en JavaScript es 0-indexed (0 = Enero)
   const date = new Date(year, month - 1, dayNum)
   const dayName = date.toLocaleDateString('es-CO', { weekday: 'long' })
   return dayName.charAt(0).toUpperCase() + dayName.slice(1)
 }
 
-// Parse fecha ISO sin timezone issues
 function formatDate(dateString: string): string {
   if (!dateString) return ''
-  // Split ISO string y toma solo la fecha (YYYY-MM-DD)
   const [year, month, day] = dateString.split('T')[0].split('-')
   return `${day}/${month}/${year}`
 }
 
-// Format hora con rango si hay departure_time
 function formatTime(startTime: string, endTime?: string | null): string {
   if (!startTime) return ''
   if (endTime) {
-    // Extraer solo la hora del departure_time (HH:MM)
     const endTimeOnly = endTime.split('T')[1]?.substring(0, 5) || endTime
     return `${startTime} - ${endTimeOnly}`
   }
@@ -134,7 +129,7 @@ function getDateRange(rangeType: string): DateRange {
   }
 }
 
-export function AppointmentTable({ initialAppointments, patients, specialties, locations }: Props) {
+export function AppointmentTable({ initialAppointments, patients, specialties, locations, tab }: Props) {
   const [appointments, setAppointments] = useState(initialAppointments)
   const [filterDateRange, setFilterDateRange] = useState<DateRange | null>(null)
   const [filterQuickRange, setFilterQuickRange] = useState<QuickRange>(null)
@@ -147,18 +142,22 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   const [editingAppointment, setEditingAppointment] = useState<AppointmentWithRelations | null>(null)
   const [statusingAppointment, setStatusingAppointment] = useState<AppointmentWithRelations | null>(null)
   const [statusAction, setStatusAction] = useState<'completed' | 'cancelled' | null>(null)
+  const [showFollowupModal, setShowFollowupModal] = useState(false)
+  const [showSpecialtySelectModal, setShowSpecialtySelectModal] = useState(false)
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([])
+  const [appointmentToComplete, setAppointmentToComplete] = useState<AppointmentWithRelations | null>(null)
   const supabase = createClient()
 
   const sortedAppointments = [...appointments].sort((a, b) => {
+    // Si no tienen fecha, van al principio (para tab Sin Asignar)
     if (!a.date && !b.date) return 0
-    if (!a.date) return 1
-    if (!b.date) return -1
+    if (!a.date) return -1
+    if (!b.date) return 1
     
-    // Comparar strings ISO directamente (YYYY-MM-DD es lexicográficamente comparable)
+    // Si ambas tienen fecha, ordenar por fecha + hora
     const dateCompare = a.date.localeCompare(b.date)
     if (dateCompare !== 0) return dateCompare
     
-    // Si misma fecha, por hora
     return a.appointment_time.localeCompare(b.appointment_time)
   })
 
@@ -202,6 +201,77 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   function handleClearDateRange() {
     setFilterDateRange(null)
     setFilterQuickRange(null)
+  }
+
+  function handleStatusClick(action: 'completed' | 'cancelled', appointment: AppointmentWithRelations) {
+    if (action === 'completed') {
+      setAppointmentToComplete(appointment)
+      setShowFollowupModal(true)
+    } else {
+      setStatusingAppointment(appointment)
+      setStatusAction('cancelled')
+    }
+  }
+
+  function handleFollowupConfirm() {
+    setShowFollowupModal(false)
+    setShowSpecialtySelectModal(true)
+  }
+
+  function handleFollowupCancel() {
+    setShowFollowupModal(false)
+    setAppointmentToComplete(null)
+  }
+
+  function handleSpecialtyToggle(specialtyId: string) {
+    setSelectedSpecialties(prev => 
+      prev.includes(specialtyId) 
+        ? prev.filter(id => id !== specialtyId)
+        : [...prev, specialtyId]
+    )
+  }
+
+  async function handleCompleteWithFollowup() {
+    if (!appointmentToComplete || selectedSpecialties.length === 0) return
+    
+    for (const specialtyId of selectedSpecialties) {
+      const { error } = await supabase.from('appointments').insert({
+        patient_id: appointmentToComplete.patient_id,
+        specialty_id: specialtyId,
+        date: null,
+        location_id: null,
+        appointment_time: null,
+        status: 'pending',
+        created_by: appointmentToComplete.created_by,
+      })
+      
+      if (error) {
+        toast.error('Error al crear cita de seguimiento')
+        return
+      }
+    }
+    
+    const { error } = await supabase
+      .from('appointments')
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('id', appointmentToComplete.id)
+    
+    if (error) {
+      toast.error('Error al actualizar cita')
+    } else {
+      setAppointments(prev => prev.filter(a => a.id !== appointmentToComplete.id))
+      toast.success('Cita completada y seguimiento creado')
+    }
+    
+    setShowSpecialtySelectModal(false)
+    setSelectedSpecialties([])
+    setAppointmentToComplete(null)
+  }
+
+  function handleSpecialtySelectCancel() {
+    setShowSpecialtySelectModal(false)
+    setSelectedSpecialties([])
+    setAppointmentToComplete(null)
   }
 
   async function handleStatusChange(action: 'completed' | 'cancelled') {
@@ -456,17 +526,17 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <DropdownMenu>
-                        <DropdownMenuTrigger>
-                          <Button variant="ghost" size="icon">
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" aria-label="Abrir menú">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => { setStatusingAppointment(appt); setStatusAction('completed') }}>
+                          <DropdownMenuItem onClick={() => handleStatusClick('completed', appt)}>
                             <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                             Marcar como atendida
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setStatusingAppointment(appt); setStatusAction('cancelled') }}>
+                          <DropdownMenuItem onClick={() => handleStatusClick('cancelled', appt)}>
                             <XCircle className="mr-2 h-4 w-4 text-red-600" />
                             Cancelar
                           </DropdownMenuItem>
@@ -509,6 +579,72 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
                 Cancelar
               </Button>
               <Button onClick={() => handleStatusChange(statusAction)}>
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFollowupModal && appointmentToComplete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-2">
+              Crear seguimiento
+            </h3>
+            <p className="text-slate-600 mb-4">
+              ¿Desea crear citas de seguimiento sin fecha para este paciente?
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleFollowupCancel}>
+                No, solo completar
+              </Button>
+              <Button onClick={handleFollowupConfirm}>
+                Sí, crear seguimiento
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSpecialtySelectModal && appointmentToComplete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-2">
+              Seleccionar especialidades para seguimiento
+            </h3>
+            <p className="text-slate-600 mb-4">
+              Seleccione al menos una especialidad para crear las citas de seguimiento:
+            </p>
+            <div className="space-y-2 mb-4">
+              {specialties.map(specialty => (
+                <label 
+                  key={specialty.id} 
+                  className="flex items-center gap-2 p-2 rounded hover:bg-slate-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedSpecialties.includes(specialty.id)}
+                    onChange={() => handleSpecialtyToggle(specialty.id)}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm">{specialty.name}</span>
+                </label>
+              ))}
+            </div>
+            {selectedSpecialties.length === 0 && (
+              <p className="text-red-600 text-sm mb-4">
+                Debe seleccionar al menos una especialidad
+              </p>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={handleSpecialtySelectCancel}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleCompleteWithFollowup}
+                disabled={selectedSpecialties.length === 0}
+              >
                 Confirmar
               </Button>
             </div>

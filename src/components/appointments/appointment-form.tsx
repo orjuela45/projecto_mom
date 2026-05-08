@@ -95,8 +95,29 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
   }, [open, appointment, form])
 
   async function onSubmit(data: FormData) {
+    const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+
+    // Validar que no exista otra cita para el mismo paciente en la misma fecha y hora
+    const { data: existingAppointment } = await supabase
+      .from('appointments')
+      .select('id')
+      .eq('patient_id', data.patient_id)
+      .eq('date', data.date)
+      .eq('appointment_time', data.appointment_time)
+      .is('deleted_at', null)
+    
+    // Si hay conflicto y es edición, excluir la cita actual
+    const hasConflict = existingAppointment && (
+      !isEditing || 
+      (isEditing && existingAppointment.some(a => a.id !== appointment.id))
+    )
+
+    if (hasConflict) {
+      toast.error('El paciente ya tiene una cita agendada a esa misma fecha y hora')
+      return
+    }
 
     const appointmentData = {
       date: data.date,
