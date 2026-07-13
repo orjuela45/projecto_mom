@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db-server'
 import { LocationTable } from './location-table'
 
 export default async function LocationList() {

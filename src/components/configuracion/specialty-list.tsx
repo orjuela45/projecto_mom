@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db-server'
 import { SpecialtyTable } from './specialty-table'
 
 export default async function SpecialtyList() {

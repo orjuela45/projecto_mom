@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db-server'
 import { PatientTable } from './patient-table'
 
 export default async function PatientList() {

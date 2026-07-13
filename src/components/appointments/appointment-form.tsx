@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/db-client'
 import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
 import {
   Dialog,
@@ -111,7 +111,7 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
     // Si hay conflicto y es edición, excluir la cita actual
     const hasConflict = existingAppointment && (
       !isEditing || 
-      (isEditing && existingAppointment.some(a => a.id !== appointment.id))
+      (isEditing && existingAppointment.some((a: any) => a.id !== appointment.id))
     )
 
     if (hasConflict) {
@@ -137,12 +137,7 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
         .from('appointments')
         .update(appointmentData)
         .eq('id', appointment.id)
-        .select(`
-          *,
-          patients (id, name),
-          specialties (id, name),
-          locations (id, name)
-        `)
+        .select('*')
         .single()
       
       if (error) {
@@ -157,12 +152,7 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
           ...appointmentData,
           created_by: user.id,
         })
-        .select(`
-          *,
-          patients (id, name),
-          specialties (id, name),
-          locations (id, name)
-        `)
+        .select('*')
         .single()
       
       if (error) {

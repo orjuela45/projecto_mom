@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/db-client'
 import { Eps } from '@/types/database'
 import { EpsForm } from './eps-form'
 import { PatientDialog } from '@/components/patients/patient-dialog'
