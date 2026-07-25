@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db-server'
 import { EpsTable } from './eps-table'
 
 export default async function EpsList() {

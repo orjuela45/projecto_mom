@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Patient } from '@/types/database'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/db-client'
 import { PatientForm } from './patient-form'
 import { PatientDialog } from './patient-dialog'
 import {

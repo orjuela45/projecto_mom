@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/db-server'
 import { AppointmentTable } from './appointment-table'
 
 export default async function AppointmentList({ tab }: { tab: 'unassigned' | 'scheduled' }) {
@@ -6,12 +6,7 @@ export default async function AppointmentList({ tab }: { tab: 'unassigned' | 'sc
   
   let query = supabase
     .from('appointments')
-    .select(`
-      *,
-      patients (id, name),
-      specialties (id, name),
-      locations (id, name, address)
-    `)
+    .select('*')
     .is('deleted_at', null)
   
   if (tab === 'unassigned') {

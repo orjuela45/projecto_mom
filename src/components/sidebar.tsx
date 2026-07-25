@@ -11,7 +11,6 @@ import {
   Menu,
   X,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -26,13 +25,10 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const supabase = createClient()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
-  async function handleSignOut() {
-    await supabase.auth.signOut()
+  function handleSignOut() {
     router.push('/login')
-    router.refresh()
   }
 
   return (

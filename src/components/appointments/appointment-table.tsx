@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/db-client'
 import { AppointmentForm } from './appointment-form'
 import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
 import {
