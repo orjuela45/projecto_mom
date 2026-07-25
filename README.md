@@ -1,105 +1,204 @@
-# MomCitas - Sistema de Citas Médicas
+# MomCitas — Sistema de Citas Médicas
 
-Sistema de gestión de citas médicas para uso personal compartido.
+App personal para gestionar citas médicas de mamá. Antes corría con
+Supabase; ahora es 100% local con Docker + Postgres para deployar en el
+homelab.
 
-## Tech Stack
+## Stack
 
-- **Frontend**: Next.js 14 (App Router)
-- **Backend**: Supabase (Postgres + Auth)
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Deployment**: Vercel (compatible)
+- **Frontend + Backend**: Next.js 16 (App Router, server components,
+  route handlers).
+- **Base de datos**: PostgreSQL 16 (corriendo en Docker).
+- **Cliente DB server-side**: `pg` con `Pool`.
+- **Cliente DB client-side**: `fetch` contra `/api/db` (el `pg` no
+  puede correr en el browser).
+- **Auth**: usuario único hardcodeado. No hay Supabase Auth, no hay
+  login real, no hay JWT. Para uso personal.
+- **Estilos**: Tailwind CSS + shadcn/ui.
+- **Despliegue**: Docker Compose en el homelab.
 
 ## Requisitos
 
-- Node.js 18+
-- Cuenta de Supabase (tier gratuito)
+- Docker 24+ y Docker Compose v2.
+- Node 22+ y npm (solo si vas a desarrollar sin Docker o a editar
+  código).
 
-## Setup Local
+No necesitás cuenta de Supabase, ni Vercel, ni nada externo.
 
-### 1. Clonar el proyecto
+## Setup local con Docker (recomendado)
 
 ```bash
-cd mom-citas
+# 1. Crear el archivo de variables (editá los valores si querés)
+cp .env.example .env
+
+# 2. Levantar el stack (Postgres + app)
+docker compose up -d --build
+
+# 3. Esperar a que el healthcheck de Postgres pase y la app arranque
+docker compose logs -f app
 ```
 
-### 2. Instalar dependencias
+La app queda en `http://localhost:${APP_PORT:-3000}`.
+
+El primer arranque ejecuta `db/init.sql` automáticamente (crea el
+schema, los roles, el usuario por defecto y el seed de especialidades
+y ubicaciones).
+
+### Comandos útiles
 
 ```bash
+docker compose ps          # ver estado de los servicios
+docker compose logs -f db  # ver logs de Postgres
+docker compose logs -f app # ver logs de la app
+docker compose down        # parar todo (conservando datos)
+docker compose down -v     # parar todo y BORRAR el volumen de Postgres
+```
+
+### Backups
+
+El volumen `db-data` persiste aunque bajes el stack. Para hacer
+backup:
+
+```bash
+# Backup
+docker compose exec -T db pg_dump -U postgres momcitas > backup-$(date +%F).sql
+
+# Restore
+cat backup-2026-07-25.sql | docker compose exec -T db psql -U postgres -d momcitas
+```
+
+Recomendación: automatizar con un cron diario en el host del homelab.
+
+## Setup local sin Docker (modo dev)
+
+Si querés iterar más rápido sin levantar el stack:
+
+```bash
+# 1. Levantar solo Postgres (cualquier Postgres 16 sirve)
+#    Opción A: docker compose up -d db
+#    Opción B: tu Postgres local
+
+# 2. Crear la DB y correr el schema
+createdb momcitas
+psql -d momcitas -f db/init.sql
+
+# 3. Configurar DATABASE_URL
+export DATABASE_URL="postgresql://postgres:tu_password@localhost:5432/momcitas"
+
+# 4. Instalar deps y correr dev
 npm install
-```
-
-### 3. Configurar Supabase
-
-1. Crear un proyecto en [supabase.com](https://supabase.com)
-2. Copiar las credenciales del proyecto:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-3. Crear archivo `.env.local` en la raíz:
-
-```bash
-cp .env.example .env.local
-# Editar .env.local con las credenciales
-```
-
-### 4. Ejecutar migraciones
-
-1. Ir al dashboard de Supabase → SQL Editor
-2. Copiar el contenido de `supabase/migrations/001_initial_schema.sql`
-3. Ejecutar el SQL
-
-### 5. Ejecutar seed (opcional)
-
-1. En SQL Editor de Supabase
-2. Copiar el contenido de `supabase/seed.sql`
-3. Ejecutar (remover `auth.uid()` y usar valores hardcodeados o crear función)
-
-### 6. Levantar servidor local
-
-```bash
 npm run dev
 ```
 
-Abrir [http://localhost:3000](http://localhost:3000)
+La app queda en `http://localhost:3000`.
 
-## Estructura del Proyecto
+## Variables de entorno
+
+Definidas en `.env.example`. Las lee `docker-compose.yml` y la app
+(server-side) lee `DATABASE_URL`.
+
+| Variable | Default | Descripción |
+| --- | --- | --- |
+| `POSTGRES_PASSWORD` | `momcitas` | Password del usuario `postgres` de Postgres. |
+| `POSTGRES_DB` | `momcitas` | Nombre de la base de datos. |
+| `APP_PORT` | `3000` | Puerto del host mapeado al contenedor de la app. |
+| `DATABASE_URL` | (compuesta en compose) | Connection string que usa `pg` en el server. |
+
+> **Importante**: `.env` está en `.gitignore`. Commiteá cambios a
+> `.env.example` y nunca pongas secretos reales en commits.
+
+## Estructura del proyecto
 
 ```
 mom-citas/
 ├── src/
-│   ├── app/                  # Next.js App Router
-│   │   ├── (auth)/          # Rutas de autenticación
-│   │   ├── (dashboard)/     # Rutas protegidas
-│   │   └── ...
-│   ├── components/           # Componentes React
-│   │   ├── ui/             # shadcn/ui components
-│   │   └── sidebar.tsx     # Navegación
+│   ├── app/                       # Next.js App Router
+│   │   ├── (auth)/login/         # Redirige al dashboard
+│   │   ├── api/db/               # Endpoint POST que arma SQL (usado por el cliente)
+│   │   └── dashboard/            # Páginas del dashboard
+│   ├── components/                # Componentes React (forms, tables, lists)
 │   ├── lib/
-│   │   ├── supabase/       # Clientes Supabase
-│   │   └── utils.ts        # Utilidades
+│   │   ├── db.ts                 # Pool pg + QueryBuilder (server-side)
+│   │   ├── db-server.ts          # createClient() para server components
+│   │   ├── db-client.ts          # createClient() para client components (fetch)
+│   │   ├── auth.ts               # getUser() hardcodeado (un solo user)
+│   │   └── dashboard-metrics.ts  # Cálculo de métricas
 │   └── types/
-│       └── database.ts     # Tipos de BD
-├── supabase/
-│   ├── migrations/         # Schema SQL
-│   └── seed.sql           # Datos iniciales
-└── middleware.ts          # Auth middleware
+│       └── database.ts           # Tipos TypeScript del schema
+├── db/
+│   └── init.sql                  # Schema + seed (corre en el primer boot de Postgres)
+├── middleware.ts                 # Pass-through (no hay auth real)
+├── next.config.ts                # output: "standalone" para el build Docker
+├── Dockerfile                    # Multi-stage: deps → build → runner
+├── docker-compose.yml            # db (Postgres 16) + app
+├── .env.example                  # Plantilla de variables de entorno
+└── package.json
 ```
 
-## Despliegue en Vercel
+## Deploy al homelab
 
-1. Hacer push a GitHub
-2. Conectar repo en [vercel.com](https://vercel.com)
-3. Agregar variables de entorno:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Deploy!
+El flujo es `git pull` + `docker compose up -d --build` en el server.
 
-## Próximos Pasos
+```bash
+# En el server del homelab
+cd /ruta/al/proyecto
+git pull
+cp .env.example .env   # la primera vez; después editá a mano
+nano .env              # ajustar POSTGRES_PASSWORD, APP_PORT, etc.
+docker compose up -d --build
+```
 
-- [ ] CRUD de Pacientes
-- [ ] CRUD de Citas
-- [ ] Dashboard con gráficos
-- [ ] Exportar/Importar desde Excel
+### Recomendaciones para el homelab
+
+- **Red interna**: si tenés otros servicios, sumá este stack a una red
+  de Docker compartida (`networks:` ya tiene `app-net` para db ↔ app).
+- **Reverse proxy**: si querés HTTPS, exponé la app con Caddy, Traefik
+  o Nginx delante. La app ya escucha en `0.0.0.0:3000`.
+- **Backups**: ver la sección de backups más arriba. Cron diario con
+  `pg_dump` es lo mínimo.
+- **Watchtower / auto-updates**: opcional. Para uso personal, los
+  updates manuales con `git pull && docker compose up -d --build` son
+  suficientes.
+- **Acceso externo**: si querés acceder desde fuera del homelab, poné
+  un VPN (Tailscale, WireGuard) en vez de exponer el puerto a
+  internet. La app **no** tiene auth real.
+
+## Migraciones de schema
+
+Hoy hay un único archivo `db/init.sql` que corre en el primer boot.
+Si más adelante necesitás cambiar el schema:
+
+1. Editá `db/init.sql` (o creá un nuevo archivo `db/migrations/NNN_*.sql`
+   si querés historial versionado).
+2. Para que Postgres lo corra en containers existentes, montá los
+   archivos nuevos en `/docker-entrypoint-initdb.d/` (solo corren en
+   el primer boot; para containers ya inicializados, hay que correr
+   `psql` a mano).
+3. Rebuild: `docker compose up -d --build db`.
+
+## Troubleshooting
+
+- **La app arranca pero no conecta a Postgres**: revisá
+  `docker compose logs app` y verificá que `DATABASE_URL` apunta a
+  `db:5432` (no `localhost`) dentro de la red de Docker.
+- **Cambios de schema no se aplican**: recordá que `db/init.sql` solo
+  corre en el primer boot. Si ya tenés un volumen con datos, tenés
+  que correr la migración a mano o destruir el volumen
+  (`docker compose down -v`).
+- **El login me pide credenciales que no tengo**: no hay login. La
+  página `/login` redirige a `/dashboard` automáticamente. Es un
+  local-only single-user.
+
+## Próximos pasos sugeridos
+
+- [ ] Reemplazar las variables `supabase` que quedaron en el código
+      por nombres más claros (`db`, `client`).
+- [ ] Endurecer RLS: hoy las policies son permisivas (`USING (true)`)
+      porque hay un solo usuario. Si en el futuro se agrega auth real,
+      revisar las policies de `db/init.sql`.
+- [ ] Agregar tests (no hay todavía).
+- [ ] HTTPS + reverse proxy en el homelab.
 
 ## Licencia
 
-MIT
+MIT (uso personal).

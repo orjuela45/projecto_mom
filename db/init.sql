@@ -16,7 +16,7 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role
 CREATE TABLE profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT,
   full_name TEXT,
   role TEXT DEFAULT 'user',
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -109,3 +109,45 @@ CREATE POLICY "eps_all" ON eps FOR ALL TO authenticated USING (true) WITH CHECK 
 -- Comments
 COMMENT ON COLUMN appointments.date IS 'Fecha de la cita. NULL para citas sin asignar';
 COMMENT ON COLUMN appointments.appointment_time IS 'Hora de la cita. NULL para citas sin asignar';
+
+-- ============================================
+-- SEED
+-- ============================================
+
+-- Default local user (matches DEFAULT_USER.id in src/lib/auth.ts).
+-- No password is required because there is no real auth flow.
+INSERT INTO profiles (id, email, full_name, role)
+VALUES (
+'00000000-0000-0000-0000-000000000001',
+'admin@momcitas.com',
+'Admin',
+'admin'
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Specialties catalog
+INSERT INTO specialties (name, created_by) VALUES
+('Prenatal Care',       '00000000-0000-0000-0000-000000000001'),
+('Cardiology',          '00000000-0000-0000-0000-000000000001'),
+('Dermatology',         '00000000-0000-0000-0000-000000000001'),
+('Endocrinology',       '00000000-0000-0000-0000-000000000001'),
+('Gastroenterology',    '00000000-0000-0000-0000-000000000001'),
+('Gynecology',          '00000000-0000-0000-0000-000000000001'),
+('General Medicine',    '00000000-0000-0000-0000-000000000001'),
+('Neurology',           '00000000-0000-0000-0000-000000000001'),
+('Ophthalmology',       '00000000-0000-0000-0000-000000000001'),
+('Orthopedics',         '00000000-0000-0000-0000-000000000001'),
+('Otolaryngology',      '00000000-0000-0000-0000-000000000001'),
+('Pediatrics',          '00000000-0000-0000-0000-000000000001'),
+('Psychiatry',          '00000000-0000-0000-0000-000000000001'),
+('Urology',             '00000000-0000-0000-0000-000000000001')
+ON CONFLICT (name) DO NOTHING;
+
+-- Locations catalog
+INSERT INTO locations (name, address, created_by) VALUES
+('Hospital Universitario San Jose',   'Cra 4 # 36-00, Cali', '00000000-0000-0000-0000-000000000001'),
+('Clínica Amiga',                      'Cra 9 # 10-25, Cali', '00000000-0000-0000-0000-000000000001'),
+('Centro Médico Valle del Lili',       'Cra 98 # 18-49, Cali', '00000000-0000-0000-0000-000000000001'),
+('IPS Universidad del Valle',          'Calle 4B # 36-00, Cali', '00000000-0000-0000-0000-000000000001'),
+('Clínica de la Mujer',                'Cra 5 # 38-20, Cali', '00000000-0000-0000-0000-000000000001')
+ON CONFLICT DO NOTHING;
