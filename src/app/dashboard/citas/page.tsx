@@ -2,6 +2,8 @@ import { BackButton } from '@/components/back-button'
 import CitasTabs from './citas-tabs'
 import AppointmentList from '@/components/appointments/appointment-list'
 
+export const dynamic = 'force-dynamic'
+
 export default async function CitasPage({ searchParams }: { searchParams: Promise<{ refresh?: string }> }) {
   const refresh = (await searchParams).refresh
   

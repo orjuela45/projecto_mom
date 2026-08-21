@@ -1,6 +1,8 @@
 import PatientList from '@/components/patients/patient-list'
 import { BackButton } from '@/components/back-button'
 
+export const dynamic = 'force-dynamic'
+
 export default function PacientesPage() {
   return (
     <div className="space-y-8">
