@@ -4,6 +4,8 @@ import { StatusPieChart } from '@/components/dashboard/status-pie-chart'
 import { WeeklyBarChart } from '@/components/dashboard/weekly-bar-chart'
 import { getTodayMetrics } from '@/lib/dashboard-metrics'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
 

@@ -5,6 +5,8 @@ import SpecialtyList from '@/components/configuracion/specialty-list'
 import LocationList from '@/components/configuracion/location-list'
 import EpsList from '@/components/configuracion/eps-list'
 
+export const dynamic = 'force-dynamic'
+
 export default function ConfiguracionPage() {
   return (
     <div className="space-y-6">
