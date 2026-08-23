@@ -85,19 +85,26 @@ class ClientQueryBuilder {
 
   private async execute(): Promise<{ data: any; error: any }> {
     try {
+      const body: Record<string, any> = { table: this.table, operation: this.mode }
+      if (this.mode === 'select') {
+        body.select = this.selectCols
+        if (this.filters.length) body.filters = this.filters
+        if (this.orderCol) body.order = { col: this.orderCol, asc: this.orderAsc }
+        if (this.limitCount) body.limit = this.limitCount
+        if (this.singleResult) body.single = true
+      } else if (this.mode === 'insert') {
+        body.data = this.insertData
+      } else if (this.mode === 'update') {
+        body.data = { set: this.updateData, filters: this.filters }
+        if (this.singleResult) body.single = true
+      } else if (this.mode === 'delete') {
+        if (this.filters.length) body.filters = this.filters
+      }
+
       const res = await fetch('/api/db', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table: this.table,
-          select: this.selectCols,
-          filters: this.filters,
-          order: this.orderCol ? { col: this.orderCol, asc: this.orderAsc } : null,
-          limit: this.limitCount,
-          single: this.singleResult,
-          operation: this.mode,
-          data: this.mode === 'insert' ? this.insertData : this.mode === 'update' ? { set: this.updateData, filters: this.filters } : undefined,
-        }),
+        body: JSON.stringify(body),
       })
       return await res.json()
     } catch (error: any) {

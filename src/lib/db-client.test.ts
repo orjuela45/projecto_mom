@@ -22,14 +22,27 @@ describe('db-client ClientQueryBuilder (browser)', () => {
     expect(fetchMock.mock.calls[0][1].method).toBe('POST')
     expect(lastBody()).toEqual({
       table: 'patients',
+      operation: 'select',
       select: '*',
       filters: [{ col: 'id', op: 'eq', value: '1' }],
-      order: null,
       limit: 1,
       single: true,
-      operation: 'select',
-      data: undefined,
     })
+  })
+
+  it('omits unused fields from the payload', async () => {
+    await from('appointments').select('id, date').order('date', { ascending: false }).limit(10)
+    const body = lastBody()
+    expect(body).toEqual({
+      table: 'appointments',
+      operation: 'select',
+      select: 'id, date',
+      order: { col: 'date', asc: false },
+      limit: 10,
+    })
+    expect(body).not.toHaveProperty('filters')
+    expect(body).not.toHaveProperty('single')
+    expect(body).not.toHaveProperty('data')
   })
 
   it('sends select columns and order', async () => {
@@ -43,9 +56,9 @@ describe('db-client ClientQueryBuilder (browser)', () => {
     })
   })
 
-  it('sends an insert payload', async () => {
+  it('sends an insert payload with only table, operation and data', async () => {
     await from('patients').insert({ name: 'Ana' })
-    expect(lastBody()).toMatchObject({
+    expect(lastBody()).toEqual({
       table: 'patients',
       operation: 'insert',
       data: { name: 'Ana' },
@@ -61,9 +74,9 @@ describe('db-client ClientQueryBuilder (browser)', () => {
     })
   })
 
-  it('sends a delete payload with filters', async () => {
+  it('sends a delete payload with only table, operation and filters', async () => {
     await from('patients').delete().eq('id', 'abc')
-    expect(lastBody()).toMatchObject({
+    expect(lastBody()).toEqual({
       table: 'patients',
       operation: 'delete',
       filters: [{ col: 'id', op: 'eq', value: 'abc' }],

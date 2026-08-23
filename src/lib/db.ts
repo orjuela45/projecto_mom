@@ -99,35 +99,98 @@ class QueryBuilder {
     }
   }
 
-  private buildWhere(startIdx = 1) {
+  private buildWhere(startIdx = 1, table?: string) {
     const clauses: string[] = []
     const params: any[] = []
     let idx = startIdx
+    const prefix = table ? `${table}.` : ''
     for (const f of this.filters) {
       if (f.op === 'is' && f.value === null) {
-        clauses.push(`${f.col} IS NULL`)
+        clauses.push(`${prefix}${f.col} IS NULL`)
       } else if (f.op === 'is' && f.value === false) {
-        clauses.push(`${f.col} IS NOT NULL`)
+        clauses.push(`${prefix}${f.col} IS NOT NULL`)
       } else if (f.op === 'eq') {
-        clauses.push(`${f.col} = $${idx}`)
+        clauses.push(`${prefix}${f.col} = $${idx}`)
         params.push(f.value)
         idx++
       } else if (f.op === 'neq') {
-        clauses.push(`${f.col} != $${idx}`)
+        clauses.push(`${prefix}${f.col} != $${idx}`)
         params.push(f.value)
         idx++
       } else if (f.op === 'not' && f.value === null) {
-        clauses.push(`${f.col} IS NOT NULL`)
+        clauses.push(`${prefix}${f.col} IS NOT NULL`)
       }
     }
     return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params, nextIdx: idx }
   }
 
+  // Parses Supabase-style select strings: '*, patients(id, name), specialties(name)'.
+  // Embeds become LEFT JOINs by convention: relation 'patients' joins via 'patient_id'.
+  private parseSelect() {
+    const parts: string[] = []
+    let depth = 0
+    let current = ''
+    for (const ch of this.selectCols) {
+      if (ch === '(') depth++
+      if (ch === ')') depth--
+      if (ch === ',' && depth === 0) {
+        parts.push(current.trim())
+        current = ''
+      } else {
+        current += ch
+      }
+    }
+    if (current.trim()) parts.push(current.trim())
+
+    const identRe = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+    const base: string[] = []
+    const embeds: Array<{ relation: string; fk: string; cols: string[] }> = []
+    for (const part of parts) {
+      const embed = part.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\(([^)]*)\)$/)
+      if (embed) {
+        const relation = embed[1]
+        const cols = embed[2].split(',').map(c => c.trim()).filter(Boolean)
+        for (const c of cols) {
+          if (!identRe.test(c)) throw new Error(`Invalid column in select: ${c}`)
+        }
+        const singular = relation.endsWith('ies') ? `${relation.slice(0, -3)}y` : relation.replace(/s$/, '')
+        embeds.push({ relation, fk: `${singular}_id`, cols })
+      } else if (part === '*') {
+        base.push('*')
+      } else if (identRe.test(part)) {
+        base.push(part)
+      } else {
+        throw new Error(`Invalid select expression: ${part}`)
+      }
+    }
+    return { base, embeds }
+  }
+
   private async executeSelect() {
-    const { where, params } = this.buildWhere()
-    const order = this.orderCol ? `ORDER BY ${this.orderCol} ${this.orderAsc ? 'ASC' : 'DESC'}` : ''
+    const { base, embeds } = this.parseSelect()
+    const hasJoins = embeds.length > 0
+    const qualify = (col: string) => (hasJoins ? `${this.table}.${col}` : col)
+
+    const selectList: string[] = base.includes('*')
+      ? [qualify('*')]
+      : base.map(qualify)
+    for (const e of embeds) {
+      const pairs = e.cols.map(c => `'${c}', ${e.relation}.${c}`).join(', ')
+      // Without the CASE, a missing relation would yield {col: null, ...} instead of NULL
+      selectList.push(
+        `CASE WHEN ${e.relation}.id IS NULL THEN NULL ELSE json_build_object(${pairs}) END AS ${e.relation}`
+      )
+    }
+
+    const joins = embeds
+      .map(e => `LEFT JOIN ${e.relation} ON ${e.relation}.id = ${this.table}.${e.fk}`)
+      .join(' ')
+    const { where, params } = this.buildWhere(1, hasJoins ? this.table : undefined)
+    const order = this.orderCol ? `ORDER BY ${qualify(this.orderCol)} ${this.orderAsc ? 'ASC' : 'DESC'}` : ''
     const limit = this.limitCount ? `LIMIT ${this.limitCount}` : ''
-    const sql = `SELECT ${this.selectCols} FROM ${this.table} ${where} ${order} ${limit}`
+    const sql = [`SELECT ${selectList.join(', ')} FROM ${this.table}`, joins, where, order, limit]
+      .filter(Boolean)
+      .join(' ')
     const result = await pool.query(sql, params)
     return { data: this.singleResult ? result.rows[0] || null : result.rows, error: null }
   }

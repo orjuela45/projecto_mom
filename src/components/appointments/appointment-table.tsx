@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/db-client'
 import { AppointmentForm } from './appointment-form'
 import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
@@ -148,6 +148,11 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
   const [appointmentToComplete, setAppointmentToComplete] = useState<AppointmentWithRelations | null>(null)
   const supabase = createClient()
 
+  // Re-sync when the server component re-fetches (router.refresh() from the refresh button)
+  useEffect(() => {
+    setAppointments(initialAppointments)
+  }, [initialAppointments])
+
   const sortedAppointments = [...appointments].sort((a, b) => {
     // Si no tienen fecha, van al principio (para tab Sin Asignar)
     if (!a.date && !b.date) return 0
@@ -291,14 +296,21 @@ export function AppointmentTable({ initialAppointments, patients, specialties, l
     setStatusingAppointment(null)
   }
 
-  function handleFormSuccess(updatedAppointment: AppointmentWithRelations) {
+  function handleFormSuccess(savedAppointment: AppointmentWithRelations) {
     setIsFormOpen(false)
     setEditingAppointment(null)
+    // insert/update return the flat row (RETURNING *); attach relations from props
+    const enriched: AppointmentWithRelations = {
+      ...savedAppointment,
+      patients: patients.find(p => p.id === savedAppointment.patient_id) ?? savedAppointment.patients ?? null,
+      specialties: specialties.find(s => s.id === savedAppointment.specialty_id) ?? savedAppointment.specialties ?? null,
+      locations: locations.find(l => l.id === savedAppointment.location_id) ?? savedAppointment.locations ?? null,
+    }
     if (editingAppointment) {
-      setAppointments(prev => prev.map(a => a.id === updatedAppointment.id ? updatedAppointment : a))
+      setAppointments(prev => prev.map(a => a.id === enriched.id ? enriched : a))
       toast.success('Cita actualizada')
     } else {
-      setAppointments(prev => [updatedAppointment, ...prev].sort((a, b) => b.date.localeCompare(a.date)))
+      setAppointments(prev => [enriched, ...prev].sort((a, b) => (b.date || '').localeCompare(a.date || '')))
       toast.success('Cita creada')
     }
   }

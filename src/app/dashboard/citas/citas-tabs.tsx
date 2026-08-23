@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
@@ -12,9 +13,11 @@ interface CitasTabsProps {
 
 export default function CitasTabs({ unassignedContent, scheduledContent }: CitasTabsProps) {
   const [activeTab, setActiveTab] = useState<'unassigned' | 'scheduled'>('unassigned')
+  const router = useRouter()
 
   function handleRefresh() {
-    window.location.reload()
+    // Re-fetch the server components (appointments lists) without reloading the page
+    router.refresh()
   }
 
   return (

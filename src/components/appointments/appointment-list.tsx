@@ -6,7 +6,7 @@ export default async function AppointmentList({ tab }: { tab: 'unassigned' | 'sc
   
   let query = supabase
     .from('appointments')
-    .select('*')
+    .select('*, patients(id, name), specialties(id, name), locations(id, name, address)')
     .is('deleted_at', null)
   
   if (tab === 'unassigned') {

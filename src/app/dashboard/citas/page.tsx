@@ -4,9 +4,7 @@ import AppointmentList from '@/components/appointments/appointment-list'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CitasPage({ searchParams }: { searchParams: Promise<{ refresh?: string }> }) {
-  const refresh = (await searchParams).refresh
-  
+export default function CitasPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4">
@@ -15,7 +13,6 @@ export default async function CitasPage({ searchParams }: { searchParams: Promis
       </div>
 
       <CitasTabs
-        key={refresh || 'default'}
         unassignedContent={<AppointmentList tab="unassigned" />}
         scheduledContent={<AppointmentList tab="scheduled" />}
       />

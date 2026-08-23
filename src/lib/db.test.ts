@@ -75,6 +75,54 @@ describe('db QueryBuilder (server)', () => {
     })
   })
 
+  describe('embedded selects (joins)', () => {
+    it('joins relations and qualifies base columns, filters and order', async () => {
+      await from('appointments')
+        .select('*, patients(id, name), specialties(id, name), locations(id, name, address)')
+        .is('deleted_at', null)
+        .order('date')
+      expect(lastSql()).toBe(
+        'SELECT appointments.*, ' +
+        "CASE WHEN patients.id IS NULL THEN NULL ELSE json_build_object('id', patients.id, 'name', patients.name) END AS patients, " +
+        "CASE WHEN specialties.id IS NULL THEN NULL ELSE json_build_object('id', specialties.id, 'name', specialties.name) END AS specialties, " +
+        "CASE WHEN locations.id IS NULL THEN NULL ELSE json_build_object('id', locations.id, 'name', locations.name, 'address', locations.address) END AS locations " +
+        'FROM appointments ' +
+        'LEFT JOIN patients ON patients.id = appointments.patient_id ' +
+        'LEFT JOIN specialties ON specialties.id = appointments.specialty_id ' +
+        'LEFT JOIN locations ON locations.id = appointments.location_id ' +
+        'WHERE appointments.deleted_at IS NULL ORDER BY appointments.date ASC'
+      )
+      expect(lastParams()).toEqual([])
+    })
+
+    it('qualifies eq filters with the table name when joining', async () => {
+      await from('appointments').select('*, patients(name)').eq('status', 'pending')
+      expect(lastSql()).toContain('WHERE appointments.status = $1')
+      expect(lastParams()).toEqual(['pending'])
+    })
+
+    it('selects only the requested base columns alongside embeds', async () => {
+      await from('appointments').select('id, date, patients(name)')
+      expect(lastSql()).toBe(
+        'SELECT appointments.id, appointments.date, ' +
+        "CASE WHEN patients.id IS NULL THEN NULL ELSE json_build_object('name', patients.name) END AS patients " +
+        'FROM appointments LEFT JOIN patients ON patients.id = appointments.patient_id'
+      )
+    })
+
+    it('rejects invalid select expressions', async () => {
+      const { data, error } = await from('appointments').select('*; DROP TABLE patients')
+      expect(data).toBeNull()
+      expect(error.message).toContain('Invalid select expression')
+    })
+
+    it('rejects invalid columns inside embeds', async () => {
+      const { data, error } = await from('appointments').select('patients(name; DROP)')
+      expect(data).toBeNull()
+      expect(error.message).toContain('Invalid column in select')
+    })
+  })
+
   describe('insert', () => {
     it('builds INSERT with positional placeholders and returns the row', async () => {
       queryMock.mockResolvedValue({ rows: [{ id: '1', name: 'Ana', phone: '123' }] })
