@@ -99,10 +99,10 @@ class QueryBuilder {
     }
   }
 
-  private buildWhere() {
+  private buildWhere(startIdx = 1) {
     const clauses: string[] = []
     const params: any[] = []
-    let idx = 1
+    let idx = startIdx
     for (const f of this.filters) {
       if (f.op === 'is' && f.value === null) {
         clauses.push(`${f.col} IS NULL`)
@@ -145,7 +145,7 @@ class QueryBuilder {
     const setCols = Object.keys(this.updateData!)
     const setVals = Object.values(this.updateData!)
     const setClauses = setCols.map((col, i) => `${col} = $${i + 1}`)
-    const { where, params: filterParams } = this.buildWhere()
+    const { where, params: filterParams } = this.buildWhere(setCols.length + 1)
     // Merge: set params first, then filter params (with shifted indices)
     const allParams = [...setVals, ...filterParams]
     const sql = `UPDATE ${this.table} SET ${setClauses.join(', ')} ${where} RETURNING *`

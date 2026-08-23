@@ -1,17 +1,22 @@
-'use client'
+"use client";
 
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { createClient } from '@/lib/db-client'
-import { AppointmentWithRelations, PatientSelect, SpecialtySelect, LocationSelect } from './types'
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { createClient } from "@/lib/db-client";
+import {
+  AppointmentWithRelations,
+  PatientSelect,
+  SpecialtySelect,
+  LocationSelect,
+} from "./types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -19,52 +24,60 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Combobox } from '@/components/ui/combobox'
-import { toast } from 'sonner'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Combobox } from "@/components/ui/combobox";
+import { toast } from "sonner";
 
 const appointmentSchema = z.object({
-  date: z.string().min(1, 'La fecha es requerida'),
-  appointment_time: z.string().min(1, 'La hora es requerida'),
+  date: z.string().min(1, "La fecha es requerida"),
+  appointment_time: z.string().min(1, "La hora es requerida"),
   departure_time: z.string().optional(),
-  patient_id: z.string().min(1, 'Selecciona un paciente'),
-  specialty_id: z.string().min(1, 'Selecciona una especialidad'),
+  patient_id: z.string().min(1, "Selecciona un paciente"),
+  specialty_id: z.string().min(1, "Selecciona una especialidad"),
   location_id: z.string().optional(),
   companion: z.string().optional(),
   notes: z.string().optional(),
-})
+});
 
-type FormData = z.infer<typeof appointmentSchema>
+type FormData = z.infer<typeof appointmentSchema>;
 
 interface Props {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  appointment: AppointmentWithRelations | null
-  patients: PatientSelect[]
-  specialties: SpecialtySelect[]
-  locations: LocationSelect[]
-  onSuccess: (appointment: AppointmentWithRelations) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  appointment: AppointmentWithRelations | null;
+  patients: PatientSelect[];
+  specialties: SpecialtySelect[];
+  locations: LocationSelect[];
+  onSuccess: (appointment: AppointmentWithRelations) => void;
 }
 
-export function AppointmentForm({ open, onOpenChange, appointment, patients, specialties, locations, onSuccess }: Props) {
-  const supabase = createClient()
-  const isEditing = !!appointment
-  
+export function AppointmentForm({
+  open,
+  onOpenChange,
+  appointment,
+  patients,
+  specialties,
+  locations,
+  onSuccess,
+}: Props) {
+  const supabase = createClient();
+  const isEditing = !!appointment;
+
   const form = useForm<FormData>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
-      date: '',
-      appointment_time: '',
-      departure_time: '',
-      patient_id: '',
-      specialty_id: '',
-      location_id: '',
-      companion: '',
-      notes: '',
+      date: "",
+      appointment_time: "",
+      departure_time: "",
+      patient_id: "",
+      specialty_id: "",
+      location_id: "",
+      companion: "",
+      notes: "",
     },
-  })
+  });
 
   useEffect(() => {
     if (open) {
@@ -72,51 +85,55 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
         form.reset({
           date: appointment.date,
           appointment_time: appointment.appointment_time,
-          departure_time: appointment.departure_time || '',
+          departure_time: appointment.departure_time || "",
           patient_id: appointment.patient_id,
           specialty_id: appointment.specialty_id,
-          location_id: appointment.locations?.id || '',
-          companion: appointment.companion || '',
-          notes: appointment.notes || '',
-        })
+          location_id: appointment.locations?.id || "",
+          companion: appointment.companion || "",
+          notes: appointment.notes || "",
+        });
       } else {
         form.reset({
-          date: new Date().toISOString().split('T')[0],
-          appointment_time: '',
-          departure_time: '',
-          patient_id: '',
-          specialty_id: '',
-          location_id: '',
-          companion: '',
-          notes: '',
-        })
+          date: new Date().toISOString().split("T")[0],
+          appointment_time: "",
+          departure_time: "",
+          patient_id: "",
+          specialty_id: "",
+          location_id: "",
+          companion: "",
+          notes: "",
+        });
       }
     }
-  }, [open, appointment, form])
+  }, [open, appointment, form]);
 
   async function onSubmit(data: FormData) {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
 
-    // Validar que no exista otra cita para el mismo paciente en la misma fecha y hora
     const { data: existingAppointment } = await supabase
-      .from('appointments')
-      .select('id')
-      .eq('patient_id', data.patient_id)
-      .eq('date', data.date)
-      .eq('appointment_time', data.appointment_time)
-      .is('deleted_at', null)
-    
-    // Si hay conflicto y es edición, excluir la cita actual
-    const hasConflict = existingAppointment && (
-      !isEditing || 
-      (isEditing && existingAppointment.some((a: any) => a.id !== appointment.id))
-    )
+      .from("appointments")
+      .select("id")
+      .eq("patient_id", data.patient_id)
+      .eq("date", data.date)
+      .eq("appointment_time", data.appointment_time)
+      .is("deleted_at", null);
+
+    const hasConflict =
+      existingAppointment?.length > 0 &&
+      (!isEditing ||
+        existingAppointment.some(
+          (a: { id: string }) => a.id !== appointment.id,
+        ));
 
     if (hasConflict) {
-      toast.error('El paciente ya tiene una cita agendada a esa misma fecha y hora')
-      return
+      toast.error(
+        "El paciente ya tiene una cita agendada a esa misma fecha y hora",
+      );
+      return;
     }
 
     const appointmentData = {
@@ -128,37 +145,37 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
       location_id: data.location_id || null,
       companion: data.companion || null,
       notes: data.notes || null,
-      status: isEditing ? undefined : 'pending',
+      status: isEditing ? undefined : "pending",
       updated_at: new Date().toISOString(),
-    }
+    };
 
     if (isEditing) {
       const { data: updated, error } = await supabase
-        .from('appointments')
+        .from("appointments")
         .update(appointmentData)
-        .eq('id', appointment.id)
-        .select('*')
-        .single()
-      
+        .eq("id", appointment.id)
+        .select("*")
+        .single();
+
       if (error) {
-        toast.error('Error al actualizar cita')
+        toast.error("Error al actualizar cita");
       } else if (updated) {
-        onSuccess(updated as AppointmentWithRelations)
+        onSuccess(updated as AppointmentWithRelations);
       }
     } else {
       const { data: created, error } = await supabase
-        .from('appointments')
+        .from("appointments")
         .insert({
           ...appointmentData,
           created_by: user.id,
         })
-        .select('*')
-        .single()
-      
+        .select("*")
+        .single();
+
       if (error) {
-        toast.error('Error al crear cita')
+        toast.error("Error al crear cita");
       } else if (created) {
-        onSuccess(created as AppointmentWithRelations)
+        onSuccess(created as AppointmentWithRelations);
       }
     }
   }
@@ -167,9 +184,7 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Editar Cita' : 'Nueva Cita'}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Cita" : "Nueva Cita"}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -224,8 +239,11 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                     <FormLabel>Lugar</FormLabel>
                     <FormControl>
                       <Combobox
-                        options={locations.map(l => ({ value: l.id, label: l.name }))}
-                        value={field.value || ''}
+                        options={locations.map((l) => ({
+                          value: l.id,
+                          label: l.name,
+                        }))}
+                        value={field.value || ""}
                         onChange={(value) => field.onChange(value || null)}
                         placeholder="Seleccionar lugar"
                         searchPlaceholder="Buscar lugar..."
@@ -246,7 +264,10 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                   <FormLabel>Paciente *</FormLabel>
                   <FormControl>
                     <Combobox
-                      options={patients.map(p => ({ value: p.id, label: p.name }))}
+                      options={patients.map((p) => ({
+                        value: p.id,
+                        label: p.name,
+                      }))}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Seleccionar paciente"
@@ -267,7 +288,10 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                   <FormLabel>Especialidad *</FormLabel>
                   <FormControl>
                     <Combobox
-                      options={specialties.map(s => ({ value: s.id, label: s.name }))}
+                      options={specialties.map((s) => ({
+                        value: s.id,
+                        label: s.name,
+                      }))}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Seleccionar especialidad"
@@ -301,7 +325,10 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
                 <FormItem>
                   <FormLabel>Observaciones</FormLabel>
                   <FormControl>
-                    <textarea {...field} className="border rounded px-3 py-2 w-full min-h-[80px]" />
+                    <textarea
+                      {...field}
+                      className="border rounded px-3 py-2 w-full min-h-[80px]"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -309,16 +336,20 @@ export function AppointmentForm({ open, onOpenChange, appointment, patients, spe
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancelar
               </Button>
               <Button type="submit">
-                {isEditing ? 'Guardar Cambios' : 'Crear Cita'}
+                {isEditing ? "Guardar Cambios" : "Crear Cita"}
               </Button>
             </div>
           </form>
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
