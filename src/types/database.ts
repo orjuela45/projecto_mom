@@ -127,8 +127,8 @@ export interface Database {
       appointments: {
         Row: {
           id: string
-          date: string
-          appointment_time: string
+          date: string | null
+          appointment_time: string | null
           departure_time: string | null
           patient_id: string
           specialty_id: string
@@ -144,8 +144,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          date: string
-          appointment_time: string
+          date?: string | null
+          appointment_time?: string | null
           departure_time?: string | null
           patient_id: string
           specialty_id: string
@@ -161,8 +161,8 @@ export interface Database {
         }
         Update: {
           id?: string
-          date?: string
-          appointment_time?: string
+          date?: string | null
+          appointment_time?: string | null
           departure_time?: string | null
           patient_id?: string
           specialty_id?: string

@@ -20,11 +20,11 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <div className="pb-4">
-        <h1 className="text-2xl md:text-4xl font-bold text-slate-900">
-          MomCitas 👋
+        <h1 className="text-2xl md:text-4xl font-bold text-foreground">
+          MomCitas
         </h1>
-        <p className="text-sm md:text-lg text-slate-600 mt-2">
-          Aquí está el resumen de citas de MomCitas
+        <p className="text-sm md:text-lg text-muted-foreground mt-2">
+          Aquí está el resumen de citas de hoy
         </p>
       </div>
 

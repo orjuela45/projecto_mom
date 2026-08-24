@@ -24,24 +24,25 @@ export function WeeklyBarChart({ appointments }: WeeklyBarChartProps) {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 dataKey="day"
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
               />
               <YAxis
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 allowDecimals={false}
               />
               <Tooltip
                 formatter={(value: any) => [`${value} citas`, 'Cantidad']}
                 contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '8px'
+                  backgroundColor: 'var(--popover)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  color: 'var(--popover-foreground)',
                 }}
               />
               <Bar
                 dataKey="count"
-                fill="#3B82F6"
-                radius={[4, 4, 0, 0]}
+                fill="var(--primary)"
+                radius={[6, 6, 0, 0]}
               />
             </BarChart>
           </ResponsiveContainer>

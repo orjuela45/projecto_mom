@@ -12,29 +12,29 @@ const cardConfig = [
   {
     label: 'Total hoy',
     icon: Calendar,
-    bg: 'bg-blue-500',
-    text: 'text-blue-600',
+    bg: 'bg-primary',
+    text: 'text-primary',
     key: 'total' as const
   },
   {
     label: 'Pendientes',
     icon: Clock,
-    bg: 'bg-yellow-500',
-    text: 'text-yellow-600',
+    bg: 'bg-amber-500',
+    text: 'text-amber-600',
     key: 'pending' as const
   },
   {
     label: 'Atendidas',
     icon: CheckCircle,
-    bg: 'bg-green-500',
-    text: 'text-green-600',
+    bg: 'bg-accent',
+    text: 'text-accent',
     key: 'completed' as const
   },
   {
     label: 'Canceladas',
     icon: XCircle,
-    bg: 'bg-red-500',
-    text: 'text-red-600',
+    bg: 'bg-destructive',
+    text: 'text-destructive',
     key: 'cancelled' as const
   }
 ]
@@ -43,17 +43,17 @@ export function MetricsCards({ metrics }: MetricsCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cardConfig.map(({ label, icon: Icon, bg, text, key }) => (
-        <Card key={label} className="hover:shadow-md transition-shadow">
+        <Card key={label} className="hover:shadow-md transition-shadow border-border/50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
-              <div className={`p-3 rounded-lg ${bg}`}>
+              <div className={`p-3 rounded-xl ${bg}`}>
                 <Icon className="w-6 h-6 text-white" />
               </div>
               <div className="text-right">
                 <p className={`text-3xl font-bold ${text}`}>
                   {metrics[key]}
                 </p>
-                <p className="text-sm text-slate-600 mt-1">{label}</p>
+                <p className="text-sm text-muted-foreground mt-1">{label}</p>
               </div>
             </div>
           </CardContent>

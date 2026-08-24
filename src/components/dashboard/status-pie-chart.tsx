@@ -19,7 +19,7 @@ export function StatusPieChart({ appointments }: StatusPieChartProps) {
           <CardTitle>Citas por estado</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-slate-500 text-center py-8">No hay datos suficientes</p>
+          <p className="text-muted-foreground text-center py-8">No hay datos suficientes</p>
         </CardContent>
       </Card>
     )
@@ -54,7 +54,7 @@ export function StatusPieChart({ appointments }: StatusPieChartProps) {
               <Legend
                 verticalAlign="bottom"
                 height={36}
-                formatter={(value) => <span className="text-slate-700">{value}</span>}
+                formatter={(value) => <span className="text-foreground">{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>

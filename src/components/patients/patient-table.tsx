@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Patient } from '@/types/database'
 import { createClient } from '@/lib/db-client'
 import { PatientForm } from './patient-form'
@@ -29,7 +28,6 @@ export function PatientTable({ initialPatients }: Props) {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null)
   const [deletingPatient, setDeletingPatient] = useState<Patient | null>(null)
-  const router = useRouter()
   const supabase = createClient()
 
   const filteredPatients = patients.filter(p => 

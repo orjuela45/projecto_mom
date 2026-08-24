@@ -4,76 +4,35 @@ import { AppointmentTable } from './appointment-table'
 export default async function AppointmentList({ tab }: { tab: 'unassigned' | 'scheduled' }) {
   const supabase = await createClient()
   
-  let query = supabase
+  // Shared lookups — same regardless of tab
+  const [patientsResult, specialtiesResult, locationsResult] = await Promise.all([
+    supabase.from('patients').select('id, name').is('deleted_at', null).order('name'),
+    supabase.from('specialties').select('id, name').is('deleted_at', null).order('name'),
+    supabase.from('locations').select('id, name, address').is('deleted_at', null).order('name'),
+  ])
+
+  let appointmentsQuery = supabase
     .from('appointments')
     .select('*, patients(id, name), specialties(id, name), locations(id, name, address)')
     .is('deleted_at', null)
-  
+
   if (tab === 'unassigned') {
-    // Sin Asignar: date = NULL (sin importar el estado)
-    query = query.is('date', null)
-    // Ordenar por creación (más recientes primero)
-    const { data: appointments } = await query.order('created_at', { ascending: false })
-    
-    const { data: patients } = await supabase
-      .from('patients')
-      .select('id, name')
-      .is('deleted_at', null)
-      .order('name')
-    
-    const { data: specialties } = await supabase
-      .from('specialties')
-      .select('id, name')
-      .is('deleted_at', null)
-      .order('name')
-    
-    const { data: locations } = await supabase
-      .from('locations')
-      .select('id, name, address')
-      .is('deleted_at', null)
-      .order('name')
-
-    return (
-      <AppointmentTable 
-        initialAppointments={appointments || []}
-        patients={patients || []}
-        specialties={specialties || []}
-        locations={locations || []}
-        tab={tab}
-      />
-    )
+    // Sin Asignar: date IS NULL — sort by creation (newest first)
+    appointmentsQuery = appointmentsQuery.is('date', null).order('created_at', { ascending: false })
   } else {
-    // Con Fecha: date != NULL (sin importar el estado)
-    query = query.not('date', 'is', null)
-    // Ordenar por fecha (más próximas primero)
-    const { data: appointments } = await query.order('date', { ascending: true })
-    
-    const { data: patients } = await supabase
-      .from('patients')
-      .select('id, name')
-      .is('deleted_at', null)
-      .order('name')
-    
-    const { data: specialties } = await supabase
-      .from('specialties')
-      .select('id, name')
-      .is('deleted_at', null)
-      .order('name')
-    
-    const { data: locations } = await supabase
-      .from('locations')
-      .select('id, name, address')
-      .is('deleted_at', null)
-      .order('name')
-
-    return (
-      <AppointmentTable 
-        initialAppointments={appointments || []}
-        patients={patients || []}
-        specialties={specialties || []}
-        locations={locations || []}
-        tab={tab}
-      />
-    )
+    // Con Fecha: date IS NOT NULL — sort by date (soonest first)
+    appointmentsQuery = appointmentsQuery.not('date', 'is', null).order('date', { ascending: true })
   }
+
+  const { data: appointments } = await appointmentsQuery
+
+  return (
+    <AppointmentTable
+      initialAppointments={appointments || []}
+      patients={patientsResult.data || []}
+      specialties={specialtiesResult.data || []}
+      locations={locationsResult.data || []}
+      tab={tab}
+    />
+  )
 }

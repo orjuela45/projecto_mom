@@ -1,20 +1,5 @@
 import { Appointment } from '@/types/database'
-
-export const STATUSES = ['pending', 'completed', 'cancelled', 'rescheduled'] as const
-
-export const statusLabels: Record<string, string> = {
-  pending: 'Pendientes',
-  completed: 'Atendidas',
-  cancelled: 'Canceladas',
-  rescheduled: 'Reprogramadas'
-}
-
-export const statusColors: Record<string, string> = {
-  pending: '#EAB308',
-  completed: '#22C55E',
-  cancelled: '#EF4444',
-  rescheduled: '#3B82F6'
-}
+import { STATUSES, statusLabelsPlural, statusChartColors } from '@/lib/constants'
 
 export interface TodayMetrics {
   total: number
@@ -37,9 +22,9 @@ export function getTodayMetrics(appointments: Appointment[]): TodayMetrics {
 
 export function getAppointmentsByStatus(appointments: Appointment[]) {
   return STATUSES.map(status => ({
-    name: statusLabels[status],
+    name: statusLabelsPlural[status],
     value: appointments.filter(a => a.status === status).length,
-    color: statusColors[status]
+    color: statusChartColors[status]
   })).filter(item => item.value > 0)
 }
 

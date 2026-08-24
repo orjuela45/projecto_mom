@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { createClient } from "@/lib/db-client";
 import {
   AppointmentWithRelations,
   PatientSelect,
@@ -28,6 +27,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
+import { createClient } from "@/lib/db-client";
 import { toast } from "sonner";
 
 const appointmentSchema = z.object({
@@ -62,7 +62,6 @@ export function AppointmentForm({
   locations,
   onSuccess,
 }: Props) {
-  const supabase = createClient();
   const isEditing = !!appointment;
 
   const form = useForm<FormData>({
@@ -83,8 +82,8 @@ export function AppointmentForm({
     if (open) {
       if (appointment) {
         form.reset({
-          date: appointment.date,
-          appointment_time: appointment.appointment_time,
+          date: appointment.date || "",
+          appointment_time: appointment.appointment_time || "",
           departure_time: appointment.departure_time || "",
           patient_id: appointment.patient_id,
           specialty_id: appointment.specialty_id,
@@ -112,7 +111,10 @@ export function AppointmentForm({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) {
+      toast.error("Error de sesión. Por favor recarga la página.");
+      return;
+    }
 
     const { data: existingAppointment } = await supabase
       .from("appointments")
